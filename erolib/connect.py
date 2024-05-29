@@ -4,10 +4,9 @@
 # Transform a graph to a (strongly) connected one
 
 import networkx as nx
-import matplotlib.pyplot as plt
 
 
-def connect(graph: nx.Graph, mark):
+def connect(graph: nx.Graph, mark) -> nx.Graph:
     """
     Return a connected graph by adding edges
     with @mark as an attribute (snow is set to 0)
@@ -25,6 +24,7 @@ def connect(graph: nx.Graph, mark):
     mst = nx.minimum_spanning_tree(comp_graph)
 
     for u, v in mst.edges():
+        # next(iter(set())) takes the first element of the set
         c_u = next(iter(comp[u]))
         c_v = next(iter(comp[v]))
 
@@ -34,17 +34,17 @@ def connect(graph: nx.Graph, mark):
 
     return res_graph
 
-def strong_connect(graph: nx.DiGraph, mark):
+def strong_connect(graph: nx.DiGraph, mark) -> nx.DiGraph:
     """
-    Return a strongly connected graph by adding edges
+    Return a strongly connected graph by adding arcs
     with @mark as an attribute
     """
 
     res_graph = graph.copy()
     cond_graph = nx.condensation(graph)
 
-    sinks = [node[0] for node in cond_graph.out_degree if node[1] == 0]
-    sources = [node[0] for node in cond_graph.in_degree if node[1] == 0]
+    sinks = [node for node, degree in cond_graph.out_degree if degree == 0]
+    sources = [node for node, degree in cond_graph.in_degree if degree == 0]
 
     for source in sources:
         for sink in sinks:
@@ -55,8 +55,5 @@ def strong_connect(graph: nx.DiGraph, mark):
                 res_graph.add_edge(sik, src, mark=mark)
 
     assert nx.is_strongly_connected(res_graph)
-
-    nx.draw_networkx(res_graph, with_labels=True)
-    plt.show()
 
     return res_graph
