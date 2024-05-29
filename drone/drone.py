@@ -2,6 +2,9 @@ import osmnx as ox
 import networkx as nx
 import random
 import scipy as sp
+import sys
+from erolib import connect
+
 
 filename = 'montreal.osm'
 
@@ -41,4 +44,9 @@ def districts_graph():
     return R
 
 R = districts_graph()
+R_conn : nx.MultiGraph = connect.connect(R, False)
+
+print(nx.get_edge_attributes(R_conn, 'mark'))
+
 ox.plot_graph(R, edge_color=ec)
+ox.plot_graph(R_conn, edge_color=ec)

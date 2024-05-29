@@ -4,32 +4,62 @@
 # Transform a graph to a (strongly) connected one
 
 import networkx as nx
+import matplotlib.pyplot as plt
 
 
 def connect(graph: nx.Graph, mark):
     """
     Return a connected graph by adding edges
+    with @mark as an attribute (snow is set to 0)
+    """
+
+    res_graph = graph.copy()
+    comp = list(nx.connected_components(graph))
+    comp_graph = nx.Graph()
+
+    for i in range(len(comp)):
+        comp_graph.add_node(i)
+
+    l = len(comp)
+    for i in range(l):
+        for j in range(i + 1, l):
+            comp_graph.add_edge(i, j, weight=1)
+
+    mst = nx.minimum_spanning_tree(comp_graph)
+
+    for u, v in mst.edges():
+        c_u = next(iter(comp[u]))
+        c_v = next(iter(comp[v]))
+
+        res_graph.add_edge(c_u, c_v, mark=mark, snow=0)
+
+    assert nx.is_connected(res_graph)
+
+    return res_graph
+
+def strong_connect(graph: nx.DiGraph, mark):
+    """
+    Return a strongly connected graph by adding edges
     with @mark as an attribute
     """
 
     res_graph = graph.copy()
-    components = list(nx.connected_components(graph))
-    components_graph = nx.Graph()
+    cond_graph = nx.condensation(graph)
 
-    for i, _ in enumerate(components):
-        components_graph.add_node(i)
+    sinks = [node[0] for node in cond_graph.out_degree if node[1] == 0]
+    sources = [node[0] for node in cond_graph.in_degree if node[1] == 0]
 
-    l = len(components)
-    for i in range(l):
-        for j in range(i + 1, l):
-            components_graph.add_edge(i, j, weight=1)
+    for source in sources:
+        for sink in sinks:
+            if sink != source:
+                src = next(iter(cond_graph.nodes[source]["members"]))
+                sik = next(iter(cond_graph.nodes[sink]["members"]))
 
-    mst = nx.minimum_spanning_tree(components_graph)
+                res_graph.add_edge(sik, src, mark=mark)
 
-    for u, v in mst.edges():
-        c_u = next(iter(components[u]))
-        c_v = next(iter(components[v]))
+    assert nx.is_strongly_connected(res_graph)
 
-        res_graph.add_edge(c_u, c_v, mark=mark)
+    nx.draw_networkx(res_graph, with_labels=True)
+    plt.show()
 
     return res_graph
