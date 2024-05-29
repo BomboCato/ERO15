@@ -33,4 +33,27 @@ def diEulerize(graph: nx.DiGraph, mark) -> nx.DiGraph:
     Return an Eularian digraph by adding arcs
     with @mark as an attribute to the @graph
     """
-    pass
+
+    res_graph = graph.copy()
+    in_degrees = dict(graph.in_degree())
+    out_degrees = dict(graph.out_degree())
+
+    deficit = []
+    surplus = []
+
+    for node in graph.nodes():
+        if in_degrees[node] < out_degrees[node]:
+            for _ in range(out_degrees[node] - in_degrees[node]):
+                surplus.append(node)
+        elif in_degrees[node] > out_degrees[node]:
+            for _ in range(in_degrees[node] - out_degrees[node]):
+                deficit.append(node)
+
+    while surplus and deficit:
+        u = surplus.pop()
+        v = deficit.pop()
+        res_graph.add_edge(u, v, mark=mark)
+
+    assert nx.is_semieulerian(res_graph)
+
+    return res_graph
