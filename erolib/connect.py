@@ -17,9 +17,6 @@ def connect(graph: nx.Graph, mark):
     comp = list(nx.connected_components(graph))
     comp_graph = nx.Graph()
 
-    for i in range(len(comp)):
-        comp_graph.add_node(i)
-
     l = len(comp)
     for i in range(l):
         for j in range(i + 1, l):
