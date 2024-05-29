@@ -12,11 +12,11 @@ def saveMontrealGraph(file):
     ox.save_graphml(G, filepath='drone/' + file)
 
 # Retrieve graph stored in a .osm file
-def retrieveGraph(file):
+def retrieveMontrealGraph(file):
     return ox.load_graphml('drone/' + file)
 
 # saveMontrealGraph(filename)
-G = retrieveGraph(filename)
+G = retrieveMontrealGraph(filename)
 
 G1 = ox.graph_from_place('Outremont, Montreal', network_type='drive')
 G2 = ox.graph_from_place('Verdun, Montreal', network_type='drive')
@@ -26,15 +26,19 @@ G5 = ox.graph_from_place('Anjou, Montreal', network_type='drive')
 G6 = nx.compose_all([G1, G2, G3, G4, G5])
 
 for u, v in G.edges():
-    G[u][v][0]['snow'] = random.randint(0, 15)
-ec = ['r' if (G[u][v][0]['snow'] >= 2.5 and G[u][v][0]['snow'] <= 15) else 'b' for u, v, k in G.edges(keys=True)]
+    for key in G[u][v]:
+        G[u][v][key]['snow'] = random.randint(0, 15)
+ec = ['r' if (G[u][v][k]['snow'] >= 2.5 and G[u][v][k]['snow'] <= 15) else 'b' for u, v, k in G.edges(keys=True)]
 
 # PARCOURS DRONE SUR G (AJOUTER UN ATTRIBUT POUR DIRE SI IL FAUT DENEIGER)
 
 
-# FAIRE UNE FONCTION QUI RETOURNE LE GRAPHE G6 AVEC CE NOUVEL ATTRIBUT (retourner R quoi)
-R=G.copy()
-R.remove_nodes_from(n for n in G if n not in G6)
+# Returns the graph containing the 5 districts
+# To use after parcouring the graph with the drone
+def districts_graph():
+    R=G.copy()
+    R.remove_nodes_from(n for n in G if n not in G6)
+    return R
 
-
+R = districts_graph()
 ox.plot_graph(R, edge_color=ec)
