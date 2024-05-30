@@ -3,3 +3,5 @@ cache/
 venv/
 test.py
 __pycache__/
+drone/erolib_windows/
+districts/
