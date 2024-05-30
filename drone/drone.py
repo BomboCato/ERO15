@@ -99,15 +99,23 @@ def retrieveDistrictsGraph():
     res.append(ox.load_graphml("drone/districts/villeray.osm"))
     return res
 
+def generateSnow(G):
+    """
+    This function adds an attribute 'snow' whose value is a random int between 0 and 15 to all edges
+    """
+    for u, v, k in G.edges(keys=True):
+        G[u][v][k]["snow"] = random.randint(0, 15)
+
 
 # saveDistrictsGraph()
 l = retrieveDistrictsGraph()
 G_all = nx.compose_all(l)
+generateSnow(G_all)
+
+G1 = 
 G_districts = nx.compose_all([l[1], l[5], l[10], l[12], l[16]]) # Graph containing all 5 districts to clear
 
-for u, v in G.edges():
-    for key in G[u][v]:
-        G[u][v][key]["snow"] = random.randint(0, 15)
+generateSnow(G)
 ec = [
     (
         "r"
@@ -118,7 +126,20 @@ ec = [
 ]
 
 # PARCOURS DRONE SUR G (AJOUTER UN ATTRIBUT POUR DIRE SI IL FAUT DENEIGER)
-
+def drone(G):
+    """
+    Returns a tuple (G, circuit) where G is the graph with attribute 'need_clear' added and circuit is path taken by the drone
+    """
+    G_conn = connect.connect(G, False)
+    G_eul = euler.eulerize(G_conn, False)
+    for u, v, k, data in G_eul.edges(keys=True, data=True):
+        snow = data.get('snow', 0) # tries to get value of attribute 'snow', if not found returns 0
+        if snow >= 2.5 and snow <= 15:
+            G_eul[u][v][k]["need_clear"] = True
+        else:
+            G_eul[u][v][k]["need_clear"] = False
+    circuit = nx.eulerian_circuit(G_eul)
+    return (G_eul, circuit)
 
 # Returns the graph containing the 5 districts
 # To use after parcouring the graph with the drone
@@ -129,11 +150,12 @@ def districts_graph():
 
 
 R = districts_graph()
+generateSnow(l[16])
+drone(l[16])
 # ox.plot_graph(R, edge_color=ec) 
 
-# l[0] was G1 in ancient times (2min ago)
-G1_conn: nx.MultiGraph = connect.connect(l[0], False)
-G1_eul: nx.MultiGraph = euler.eulerize(G1_conn, False)
+# G1_conn: nx.MultiGraph = connect.connect(l[0], False)
+# G1_eul: nx.MultiGraph = euler.eulerize(G1_conn, False)
 
 # ox.plot_graph(G1, edge_color=ec)
 # ox.plot_graph(G1_conn, edge_color=ec)
