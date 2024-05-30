@@ -4,7 +4,6 @@
 # Eulerize a graph
 
 import networkx as nx
-import matplotlib.pyplot as plt
 
 
 def eulerize(graph: nx.MultiGraph, mark) -> nx.MultiGraph:
@@ -27,7 +26,7 @@ def eulerize(graph: nx.MultiGraph, mark) -> nx.MultiGraph:
     for u, v in matching:
         res_graph.add_edge(u, v, mark=mark)
 
-    assert nx.is_eulerian(res_graph)
+    assert nx.is_semieulerian(res_graph)
 
     return res_graph
 
