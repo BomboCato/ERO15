@@ -6,7 +6,8 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 
-def eulerize(graph: nx.Graph, mark) -> nx.Graph:
+
+def eulerize(graph: nx.MultiGraph, mark) -> nx.MultiGraph:
     """
     Return an Eularian graph by adding edges
     with @mark as an attribute to the @graph
@@ -17,7 +18,9 @@ def eulerize(graph: nx.Graph, mark) -> nx.Graph:
     comp_odd = nx.complete_graph(odd_vertex)
 
     for u, v in comp_odd.edges:
-        comp_odd[u][v]['weight'] = nx.shortest_path_length(graph, source=u, target=v)
+        comp_odd[u][v]["weight"] = nx.shortest_path_length(
+            graph, source=u, target=v
+        )
 
     matching = nx.algorithms.min_weight_matching(comp_odd)
 
@@ -28,7 +31,8 @@ def eulerize(graph: nx.Graph, mark) -> nx.Graph:
 
     return res_graph
 
-def diEulerize(graph: nx.DiGraph, mark) -> nx.DiGraph:
+
+def diEulerize(graph: nx.MultiDiGraph, mark) -> nx.MultiDiGraph:
     """
     Return an Eularian digraph by adding arcs
     with @mark as an attribute to the @graph

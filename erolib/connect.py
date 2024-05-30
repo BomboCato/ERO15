@@ -6,7 +6,7 @@
 import networkx as nx
 
 
-def connect(graph: nx.Graph, mark) -> nx.Graph:
+def connect(graph: nx.MultiGraph, mark) -> nx.MultiGraph:
     """
     Return a connected graph by adding edges
     with @mark as an attribute (snow is set to 0)
@@ -34,7 +34,8 @@ def connect(graph: nx.Graph, mark) -> nx.Graph:
 
     return res_graph
 
-def strong_connect(graph: nx.DiGraph, mark) -> nx.DiGraph:
+
+def strong_connect(graph: nx.MultiDiGraph, mark) -> nx.MultiDiGraph:
     """
     Return a strongly connected graph by adding arcs
     with @mark as an attribute
@@ -44,7 +45,9 @@ def strong_connect(graph: nx.DiGraph, mark) -> nx.DiGraph:
     cond_graph = nx.condensation(graph)
 
     sinks = [node for node, degree in cond_graph.out_degree if degree == 0]
-    sources = [node for node, degree in cond_graph.in_degree if degree == 0]
+    sources = [
+        node for node, degree in cond_graph.in_degree if degree == 0
+    ]
 
     for source in sources:
         for sink in sinks:
