@@ -112,8 +112,38 @@ l = retrieveDistrictsGraph()
 G_all = nx.compose_all(l)
 generateSnow(G_all)
 
-G1 = 
-G_districts = nx.compose_all([l[1], l[5], l[10], l[12], l[16]]) # Graph containing all 5 districts to clear
+
+def getDistrictGraphSnow(i):
+    R = G_all.copy()
+    R.remove_nodes_from(n for n in G_all if n not in l[i])
+    R.remove_edges_from(e for e in G_all.edges if e not in l[i].edges)
+    return R
+
+ec = [
+    (
+        "r"
+        if (G_all[u][v][k]["snow"] >= 2.5 and G_all[u][v][k]["snow"] <= 15)
+        else "b"
+    )
+    for u, v, k in G_all.edges(keys=True)
+]
+
+# ox.plot_graph(G_all, edge_color=ec)
+
+
+d1 = getDistrictGraphSnow(1)
+# print(d1.edges(data=True))
+ec = [
+    (
+        "r"
+        if (d1[u][v][k]["snow"] >= 2.5 and d1[u][v][k]["snow"] <= 15)
+        else "b"
+    )
+    for u, v, k in d1.edges(keys=True)
+]
+# ox.plot_graph(d1, edge_color=ec)
+
+G_districts = nx.compose_all([getDistrictGraphSnow(1), getDistrictGraphSnow(5), getDistrictGraphSnow(10), getDistrictGraphSnow(12), getDistrictGraphSnow(16)]) # Graph containing all 5 districts to clear
 
 generateSnow(G)
 ec = [
@@ -151,7 +181,8 @@ def districts_graph():
 
 R = districts_graph()
 generateSnow(l[16])
-drone(l[16])
+(G_eul, circuit) = drone(l[16])
+ox.plot_graph(G_eul)
 # ox.plot_graph(R, edge_color=ec) 
 
 # G1_conn: nx.MultiGraph = connect.connect(l[0], False)
