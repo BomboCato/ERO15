@@ -47,9 +47,23 @@ def diEulerize(graph: nx.MultiDiGraph, mark) -> nx.MultiDiGraph:
 
     for node in graph.nodes():
         if in_degrees[node] < out_degrees[node]:
-            surplus.extend([node for _ in range(round(out_degrees[node] - in_degrees[node]))])
+            surplus.extend(
+                [
+                    node
+                    for _ in range(
+                        round(out_degrees[node] - in_degrees[node])
+                    )
+                ]
+            )
         elif in_degrees[node] > out_degrees[node]:
-            deficit.extend([node for _ in range(round(in_degrees[node] - out_degrees[node]))])
+            deficit.extend(
+                [
+                    node
+                    for _ in range(
+                        round(in_degrees[node] - out_degrees[node])
+                    )
+                ]
+            )
 
     while surplus and deficit:
         u = surplus.pop()

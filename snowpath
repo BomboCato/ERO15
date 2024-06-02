@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+
+import typer
+from cli import drone, snowplow
+
+
+app = typer.Typer(no_args_is_help=True, add_completion=False)
+
+
+app.add_typer(drone.app, name="drone")
+app.add_typer(snowplow.app, name="snowplow")
+
+
+if __name__ == "__main__":
+    app()

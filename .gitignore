@@ -5,4 +5,6 @@ test.py
 __pycache__/
 drone/erolib_windows/
 districts/
-data/
+data/snow/
+data/routes/
+data/districts/
