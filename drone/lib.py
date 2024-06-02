@@ -1,7 +1,7 @@
 #
-# erolib/connect.py
+# drone/lib.py
 #
-# Transform a graph to a (strongly) connected one
+
 
 import networkx as nx
 
@@ -35,28 +35,26 @@ def connect(graph: nx.MultiGraph, mark) -> nx.MultiGraph:
     return res_graph
 
 
-def strong_connect(graph: nx.MultiDiGraph, mark) -> nx.MultiDiGraph:
+def eulerize(graph: nx.MultiGraph, mark) -> nx.MultiGraph:
     """
-    Return a strongly connected graph by adding arcs
-    with @mark as an attribute
+    Return an semieularian graph by adding edges
+    with @mark as an attribute to the @graph
     """
 
     res_graph = graph.copy()
-    cond_graph = nx.condensation(graph)
+    odd_vertex = [node for node, degree in graph.degree if degree % 2 != 0]
+    comp_odd = nx.complete_graph(odd_vertex)
 
-    sinks = [node for node, degree in cond_graph.out_degree if degree == 0]
-    sources = [
-        node for node, degree in cond_graph.in_degree if degree == 0
-    ]
+    for u, v in comp_odd.edges:
+        comp_odd[u][v]["weight"] = nx.shortest_path_length(
+            graph, source=u, target=v
+        )
 
-    for source in sources:
-        for sink in sinks:
-            if sink != source:
-                src = next(iter(cond_graph.nodes[source]["members"]))
-                sik = next(iter(cond_graph.nodes[sink]["members"]))
+    matching = nx.algorithms.min_weight_matching(comp_odd)
 
-                res_graph.add_edge(sik, src, mark=mark)
+    for u, v in matching:
+        res_graph.add_edge(u, v, mark=mark)
 
-    assert nx.is_strongly_connected(res_graph)
+    assert nx.is_semieulerian(res_graph)
 
     return res_graph

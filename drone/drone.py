@@ -1,19 +1,18 @@
 import osmnx as ox
 import networkx as nx
 import random
-import scipy as sp
-import sys
-from erolib import connect, euler
-# from erolib_windows import connect, euler
+import lib
 
 filename = "montreal.osm"
+
 
 def saveMontrealGraph(file):
     """
     Saves an undirected graph of Montreal in a .osm file
     """
-    G = ox.graph_from_place("Montreal, Canada", network_type="drive")
-    G = ox.convert.to_undirected(G)
+    G = ox.graph_from_place(
+        "Montreal, Canada", network_type="drive"
+    ).to_undirected()
     ox.save_graphml(G, filepath="drone/" + file)
 
 
@@ -28,30 +27,72 @@ def retrieveMontrealGraph(file):
 # saveMontrealGraph(filename)
 G = retrieveMontrealGraph(filename)
 
+
 def saveDistrictsGraph():
     """
     Creates and saves a graph for each district in Montreal into a file in the districts/ folder
     """
-    G1 = ox.graph_from_place('Ahuntsic-Cartierville, Montreal', network_type='drive').to_undirected()
-    G2 = ox.graph_from_place('Anjou, Montreal', network_type='drive').to_undirected()
-    G3 = ox.graph_from_place('Côte-des-Neiges–Notre-Dame-de-Grâce, Montreal', network_type='drive').to_undirected()
-    G4 = ox.graph_from_place('Lachine, Montreal', network_type='drive').to_undirected()
-    G5 = ox.graph_from_place('LaSalle, Montreal', network_type='drive').to_undirected()
-    G6 = ox.graph_from_place('Plateau Mont-Royal, Montreal', network_type='drive').to_undirected()
-    G7 = ox.graph_from_place('Le Sud-Ouest, Montreal', network_type='drive').to_undirected()
-    G8 = ox.graph_from_place('Île-Bizard–Sainte-Geneviève, Montreal', network_type='drive').to_undirected()
-    G9 = ox.graph_from_place('Mercier–Hochelaga-Maisonneuve, Montreal', network_type='drive').to_undirected()
-    G10 = ox.graph_from_place('Montréal-Nord, Montreal', network_type='drive').to_undirected()
-    G11 = ox.graph_from_place('Outremont, Montreal', network_type='drive').to_undirected()
-    G12 = ox.graph_from_place('Pierrefonds-Roxboro, Montreal', network_type='drive').to_undirected()
-    G13 = ox.graph_from_place('Rivière-des-Prairies–Pointe-aux-Trembles, Montreal', network_type='drive').to_undirected()
-    G14 = ox.graph_from_place('Rosemont–La Petite-Patrie, Montreal', network_type='drive').to_undirected()
-    G15 = ox.graph_from_place('Saint-Laurent, Montreal', network_type='drive').to_undirected()
-    G16 = ox.graph_from_place('Saint-Léonard, Montreal', network_type='drive').to_undirected()
-    G17 = ox.graph_from_place('Verdun, Montreal', network_type='drive').to_undirected()
-    G18 = ox.graph_from_place('Ville-Marie, Montreal', network_type='drive').to_undirected()
-    G19 = ox.graph_from_place('Villeray–Saint-Michel–Parc-Extension, Montreal', network_type='drive').to_undirected()   
-    
+    G1 = ox.graph_from_place(
+        "Ahuntsic-Cartierville, Montreal", network_type="drive"
+    ).to_undirected()
+    G2 = ox.graph_from_place(
+        "Anjou, Montreal", network_type="drive"
+    ).to_undirected()
+    G3 = ox.graph_from_place(
+        "Côte-des-Neiges–Notre-Dame-de-Grâce, Montreal",
+        network_type="drive",
+    ).to_undirected()
+    G4 = ox.graph_from_place(
+        "Lachine, Montreal", network_type="drive"
+    ).to_undirected()
+    G5 = ox.graph_from_place(
+        "LaSalle, Montreal", network_type="drive"
+    ).to_undirected()
+    G6 = ox.graph_from_place(
+        "Plateau Mont-Royal, Montreal", network_type="drive"
+    ).to_undirected()
+    G7 = ox.graph_from_place(
+        "Le Sud-Ouest, Montreal", network_type="drive"
+    ).to_undirected()
+    G8 = ox.graph_from_place(
+        "Île-Bizard–Sainte-Geneviève, Montreal", network_type="drive"
+    ).to_undirected()
+    G9 = ox.graph_from_place(
+        "Mercier–Hochelaga-Maisonneuve, Montreal", network_type="drive"
+    ).to_undirected()
+    G10 = ox.graph_from_place(
+        "Montréal-Nord, Montreal", network_type="drive"
+    ).to_undirected()
+    G11 = ox.graph_from_place(
+        "Outremont, Montreal", network_type="drive"
+    ).to_undirected()
+    G12 = ox.graph_from_place(
+        "Pierrefonds-Roxboro, Montreal", network_type="drive"
+    ).to_undirected()
+    G13 = ox.graph_from_place(
+        "Rivière-des-Prairies–Pointe-aux-Trembles, Montreal",
+        network_type="drive",
+    ).to_undirected()
+    G14 = ox.graph_from_place(
+        "Rosemont–La Petite-Patrie, Montreal", network_type="drive"
+    ).to_undirected()
+    G15 = ox.graph_from_place(
+        "Saint-Laurent, Montreal", network_type="drive"
+    ).to_undirected()
+    G16 = ox.graph_from_place(
+        "Saint-Léonard, Montreal", network_type="drive"
+    ).to_undirected()
+    G17 = ox.graph_from_place(
+        "Verdun, Montreal", network_type="drive"
+    ).to_undirected()
+    G18 = ox.graph_from_place(
+        "Ville-Marie, Montreal", network_type="drive"
+    ).to_undirected()
+    G19 = ox.graph_from_place(
+        "Villeray–Saint-Michel–Parc-Extension, Montreal",
+        network_type="drive",
+    ).to_undirected()
+
     ox.save_graphml(G1, filepath="drone/districts/ahuntsic.osm")
     ox.save_graphml(G2, filepath="drone/districts/anjou.osm")
     ox.save_graphml(G3, filepath="drone/districts/cote_des_neiges.osm")
@@ -99,6 +140,7 @@ def retrieveDistrictsGraph():
     res.append(ox.load_graphml("drone/districts/villeray.osm"))
     return res
 
+
 def generateSnow(G):
     """
     This function adds an attribute 'snow' whose value is a random int between 0 and 15 to all edges
@@ -118,6 +160,7 @@ def getDistrictGraphSnow(i):
     R.remove_nodes_from(n for n in G_all if n not in l[i])
     R.remove_edges_from(e for e in G_all.edges if e not in l[i].edges)
     return R
+
 
 ec = [
     (
@@ -143,7 +186,15 @@ ec = [
 ]
 # ox.plot_graph(d1, edge_color=ec)
 
-G_districts = nx.compose_all([getDistrictGraphSnow(1), getDistrictGraphSnow(5), getDistrictGraphSnow(10), getDistrictGraphSnow(12), getDistrictGraphSnow(16)]) # Graph containing all 5 districts to clear
+G_districts = nx.compose_all(
+    [
+        getDistrictGraphSnow(1),
+        getDistrictGraphSnow(5),
+        getDistrictGraphSnow(10),
+        getDistrictGraphSnow(12),
+        getDistrictGraphSnow(16),
+    ]
+)  # Graph containing all 5 districts to clear
 
 generateSnow(G)
 ec = [
@@ -155,26 +206,30 @@ ec = [
     for u, v, k in G.edges(keys=True)
 ]
 
+
 # PARCOURS DRONE SUR G (AJOUTER UN ATTRIBUT POUR DIRE SI IL FAUT DENEIGER)
 def drone(G):
     """
     Returns a tuple (G, circuit) where G is the graph with attribute 'need_clear' added and circuit is path taken by the drone
     """
-    G_conn = connect.connect(G, False)
-    G_eul = euler.eulerize(G_conn, False)
-    for u, v, k, data in G_eul.edges(keys=True, data=True):
-        snow = data.get('snow', 0) # tries to get value of attribute 'snow', if not found returns 0
+    G_conn = lib.connect(G, False)
+    G_eul = lib.eulerize(G_conn, False)
+    for u, v, data in G_eul.edges(data=True):
+        snow = data.get(
+            "snow", 0
+        )  # tries to get value of attribute 'snow', if not found returns 0
         if snow >= 2.5 and snow <= 15:
-            G_eul[u][v][k]["need_clear"] = True
+            G_eul[u][v][data]["need_clear"] = True
         else:
-            G_eul[u][v][k]["need_clear"] = False
+            G_eul[u][v][data]["need_clear"] = False
     circuit = nx.eulerian_circuit(G_eul)
     return (G_eul, circuit)
+
 
 # Returns the graph containing the 5 districts
 # To use after parcouring the graph with the drone
 def districts_graph():
-    R=G.copy()
+    R = G.copy()
     R.remove_nodes_from(n for n in G if n not in G_districts)
     return R
 
@@ -183,7 +238,7 @@ R = districts_graph()
 generateSnow(l[16])
 (G_eul, circuit) = drone(l[16])
 ox.plot_graph(G_eul)
-# ox.plot_graph(R, edge_color=ec) 
+# ox.plot_graph(R, edge_color=ec)
 
 # G1_conn: nx.MultiGraph = connect.connect(l[0], False)
 # G1_eul: nx.MultiGraph = euler.eulerize(G1_conn, False)
