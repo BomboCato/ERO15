@@ -5,6 +5,8 @@ import scipy as sp
 import sys
 from erolib import connect, euler
 # from erolib_windows import connect, euler
+from multiprocessing import Process
+import copy
 
 filename = "montreal.osm"
 
@@ -24,9 +26,9 @@ def retrieveMontrealGraph(file):
     """
     return ox.load_graphml("drone/" + file)
 
-
 # saveMontrealGraph(filename)
 G = retrieveMontrealGraph(filename)
+
 
 def saveDistrictsGraph():
     """
@@ -50,8 +52,8 @@ def saveDistrictsGraph():
     G16 = ox.graph_from_place('Saint-Léonard, Montreal', network_type='drive').to_undirected()
     G17 = ox.graph_from_place('Verdun, Montreal', network_type='drive').to_undirected()
     G18 = ox.graph_from_place('Ville-Marie, Montreal', network_type='drive').to_undirected()
-    G19 = ox.graph_from_place('Villeray–Saint-Michel–Parc-Extension, Montreal', network_type='drive').to_undirected()   
-    
+    G19 = ox.graph_from_place('Villeray–Saint-Michel–Parc-Extension, Montreal', network_type='drive').to_undirected()
+
     ox.save_graphml(G1, filepath="drone/districts/ahuntsic.osm")
     ox.save_graphml(G2, filepath="drone/districts/anjou.osm")
     ox.save_graphml(G3, filepath="drone/districts/cote_des_neiges.osm")
@@ -106,6 +108,35 @@ def generateSnow(G):
     for u, v, k in G.edges(keys=True):
         G[u][v][k]["snow"] = random.randint(0, 15)
 
+def coloringSnow(G):
+    """
+    This function is used to draw edges with different colors depending on the level of snow
+    """
+    return [(
+        "r"
+        if (G[u][v][k]["snow"] >= 2.5 and G[u][v][k]["snow"] <= 15)
+        else "b"
+    )
+    for u, v, k in G.edges(keys=True)]
+
+def coloringNeedClear(G):
+    """
+    This function is used to draw edges with different colors depending on if the road needs to be cleared or not
+    """
+    return [(
+        "r"
+        if (G[u][v][k]["need_clear"])
+        else "b"
+    )
+    for u, v, k in G.edges(keys=True)]
+
+def transferAttributes(G, G2):
+    """
+    It transfers the attributes of the edges in G2 to G.
+    """
+    for u, v, k, data in G2.edges(keys=True, data=True):
+        if G.has_edge(u, v, k):
+            G[u][v][k].update(data)
 
 # saveDistrictsGraph()
 l = retrieveDistrictsGraph()
@@ -114,49 +145,27 @@ generateSnow(G_all)
 
 
 def getDistrictGraphSnow(i):
+    """
+    Allows retrieval of each district's graph while keeping the attribute 'snow' generated in the graph of the entire city
+    """
     R = G_all.copy()
     R.remove_nodes_from(n for n in G_all if n not in l[i])
     R.remove_edges_from(e for e in G_all.edges if e not in l[i].edges)
     return R
 
-ec = [
-    (
-        "r"
-        if (G_all[u][v][k]["snow"] >= 2.5 and G_all[u][v][k]["snow"] <= 15)
-        else "b"
-    )
-    for u, v, k in G_all.edges(keys=True)
-]
+def alldistrictsSnow():
+    res = []
+    for i in range(19):
+        res.append(getDistrictGraphSnow(i))
+    return res
 
-# ox.plot_graph(G_all, edge_color=ec)
+l = alldistrictsSnow()
 
+G_districts = nx.compose_all([l[1], l[5], l[10], l[12], l[16]]) # Graph containing all 5 districts to clear
+# generateSnow(G)
 
-d1 = getDistrictGraphSnow(1)
-# print(d1.edges(data=True))
-ec = [
-    (
-        "r"
-        if (d1[u][v][k]["snow"] >= 2.5 and d1[u][v][k]["snow"] <= 15)
-        else "b"
-    )
-    for u, v, k in d1.edges(keys=True)
-]
-# ox.plot_graph(d1, edge_color=ec)
-
-G_districts = nx.compose_all([getDistrictGraphSnow(1), getDistrictGraphSnow(5), getDistrictGraphSnow(10), getDistrictGraphSnow(12), getDistrictGraphSnow(16)]) # Graph containing all 5 districts to clear
-
-generateSnow(G)
-ec = [
-    (
-        "r"
-        if (G[u][v][k]["snow"] >= 2.5 and G[u][v][k]["snow"] <= 15)
-        else "b"
-    )
-    for u, v, k in G.edges(keys=True)
-]
-
-# PARCOURS DRONE SUR G (AJOUTER UN ATTRIBUT POUR DIRE SI IL FAUT DENEIGER)
-def drone(G):
+total_distance = 0
+def drone(G, src=None):
     """
     Returns a tuple (G, circuit) where G is the graph with attribute 'need_clear' added and circuit is path taken by the drone
     """
@@ -168,21 +177,37 @@ def drone(G):
             G_eul[u][v][k]["need_clear"] = True
         else:
             G_eul[u][v][k]["need_clear"] = False
-    circuit = nx.eulerian_circuit(G_eul)
+    circuit = nx.eulerian_circuit(G_eul, source=src)
     return (G_eul, circuit)
 
 # Returns the graph containing the 5 districts
 # To use after parcouring the graph with the drone
 def districts_graph():
     R=G.copy()
-    R.remove_nodes_from(n for n in G if n not in G_districts)
+    R.remove_nodes_from(n for n in G_all if n not in G_districts)
     return R
 
 
-R = districts_graph()
-generateSnow(l[16])
+# R = districts_graph()
+# ox.plot_graph(G_districts, edge_color=coloringSnow(G_districts))
+(G_eul, circuit) = drone(l[1])
+transferAttributes(G_districts, G_eul)
+(G_eul, circuit) = drone(l[5])
+transferAttributes(G_districts, G_eul)
+(G_eul, circuit) = drone(l[10])
+transferAttributes(G_districts, G_eul)
+(G_eul, circuit) = drone(l[12])
+transferAttributes(G_districts, G_eul)
 (G_eul, circuit) = drone(l[16])
-ox.plot_graph(G_eul)
+transferAttributes(G_districts, G_eul)
+
+ox.plot_graph(G_districts, edge_color=coloringNeedClear(G_districts))
+
+# transferAttributes(l[1], G_eul)
+# ox.plot_graph(l[1], edge_color=coloringSnow(l[1]))
+# ox.plot_graph(l[1], edge_color=coloringNeedClear(l[1]))
+
+# ox.plot_graph(G_eul)
 # ox.plot_graph(R, edge_color=ec) 
 
 # G1_conn: nx.MultiGraph = connect.connect(l[0], False)
