@@ -33,7 +33,7 @@ def district(
 
     if output_file != "":
         ox.plot_graph(
-            dist.graph, save=True, filepath=output_file, node_size=1
+            dist.graph, save=True, filepath=output_file, node_size=1, show=False
         )
     else:
         ox.plot_graph(dist.graph)

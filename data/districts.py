@@ -12,6 +12,9 @@ class District:
         self.name = name
         self.graph = graph
 
+    def copy(self):
+        return District(self.name, self.graph.copy())
+
     def __str__(self) -> str:
         return f"District {self.name}"
 
