@@ -32,6 +32,8 @@ def district(
     dist = load_district(name)
 
     if output_file != "":
-        ox.plot_graph(dist.graph, save=True, filepath=output_file, node_size=1)
+        ox.plot_graph(
+            dist.graph, save=True, filepath=output_file, node_size=1
+        )
     else:
         ox.plot_graph(dist.graph)

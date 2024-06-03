@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 
-import typer
+from typing import Optional
+from typing_extensions import Annotated
 from cli import drone, snowplow, display
+
+import typer
+import os
 
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
@@ -10,6 +14,30 @@ app = typer.Typer(no_args_is_help=True, add_completion=False)
 app.add_typer(drone.app, name="drone")
 app.add_typer(snowplow.app, name="snowplow")
 app.add_typer(display.app, name="display")
+
+
+def delete_data_callback(value: bool) -> None:
+    if value:
+        if os.path.exists("data/districts.pkl"):
+            os.remove("data/districts.pkl")
+        if os.path.exists("data/routes.pkl"):
+            os.remove("data/routes.pkl")
+        if os.path.exists("data/snow.pkl"):
+            os.remove("data/snow.pkl")
+
+
+@app.callback()
+def main(
+    delete_data: Annotated[
+        Optional[bool],
+        typer.Option(
+            "--delete-data",
+            callback=delete_data_callback,
+            help="Remove generated data.",
+        ),
+    ] = None
+) -> None:
+    pass
 
 
 if __name__ == "__main__":
