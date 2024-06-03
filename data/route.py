@@ -2,7 +2,8 @@
 # data/route.py
 #
 
-import lib
+import data.lib as lib
+
 
 class Route:
     def __init__(self, route: list, related_district: str) -> None:
@@ -15,6 +16,7 @@ class Route:
 
     def __repr__(self) -> str:
         return self.__str__()
+
 
 def create_route(route_data: list, related_district: str) -> Route:
     """

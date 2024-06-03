@@ -4,7 +4,8 @@
 
 import networkx as nx
 import osmnx as ox
-import lib
+import data.lib as lib
+
 
 class District:
     def __init__(self, name: str, graph: nx.MultiDiGraph) -> None:
@@ -17,20 +18,22 @@ class District:
     def __repr__(self) -> str:
         return self.__str__()
 
+
 def create_district(name: str, graph: nx.MultiDiGraph) -> District:
     """
     Create a new district object and save it to local storage.
     Does not check if district already exist !
     """
-    districts: dict[str, District] = lib.get_data("district.pkl")
+    districts: dict[str, District] = lib.get_data("districts.pkl")
 
     dist = District(name, graph)
 
     districts[name] = dist
 
-    lib.save_data("district.pkl", districts)
+    lib.save_data("districts.pkl", districts)
 
     return dist
+
 
 def load_district(name: str) -> District:
     """
@@ -40,9 +43,11 @@ def load_district(name: str) -> District:
     districts: dict[str, District] = lib.get_data("districts.pkl")
 
     if name in districts:
+        print("District already downloaded")
         return districts[name]
 
-    graph = ox.graph_from_place(name, network_type="drive") 
+    print("Downloading district...")
+    graph = ox.graph_from_place(name, network_type="drive")
 
     dist = create_district(name, graph)
 

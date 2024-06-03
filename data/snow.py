@@ -2,7 +2,8 @@
 # data/snow.py
 #
 
-import lib
+import data.lib as lib
+
 
 class Snow:
     def __init__(self, snow_data: list, related_district: str) -> None:
@@ -14,6 +15,7 @@ class Snow:
 
     def __repr__(self) -> str:
         return self.__str__()
+
 
 def create_snow(snow_data: list, related_district: str) -> Snow:
     """

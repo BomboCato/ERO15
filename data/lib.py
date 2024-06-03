@@ -4,7 +4,6 @@
 # Optimizing loading times
 
 from pathlib import Path
-
 import pickle
 
 data_path = Path(__file__).parent
@@ -21,7 +20,8 @@ def get_data(file_name: str) -> dict:
         with open(data_path / file_name, "rb") as data:
             pick = pickle.load(data)
     except FileNotFoundError:
-        Path(file_name).touch()
+        with open(data_path / file_name, "wb") as data:
+            pickle.dump({}, data)
 
     return pick
 
