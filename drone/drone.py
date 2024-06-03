@@ -7,6 +7,7 @@ from erolib import connect, euler
 # from erolib_windows import connect, euler
 from multiprocessing import Process
 import copy
+import lib
 
 filename = "montreal.osm"
 
@@ -14,8 +15,9 @@ def saveMontrealGraph(file):
     """
     Saves an undirected graph of Montreal in a .osm file
     """
-    G = ox.graph_from_place("Montreal, Canada", network_type="drive")
-    G = ox.convert.to_undirected(G)
+    G = ox.graph_from_place(
+        "Montreal, Canada", network_type="drive"
+    ).to_undirected()
     ox.save_graphml(G, filepath="drone/" + file)
 
 
@@ -101,6 +103,7 @@ def retrieveDistrictsGraph():
     res.append(ox.load_graphml("drone/districts/villeray.osm"))
     return res
 
+
 def generateSnow(G):
     """
     This function adds an attribute 'snow' whose value is a random int between 0 and 15 to all edges
@@ -165,20 +168,25 @@ G_districts = nx.compose_all([l[1], l[5], l[10], l[12], l[16]]) # Graph containi
 # generateSnow(G)
 
 total_distance = 0
+
+# PARCOURS DRONE SUR G (AJOUTER UN ATTRIBUT POUR DIRE SI IL FAUT DENEIGER)
 def drone(G, src=None):
     """
     Returns a tuple (G, circuit) where G is the graph with attribute 'need_clear' added and circuit is path taken by the drone
     """
-    G_conn = connect.connect(G, False)
-    G_eul = euler.eulerize(G_conn, False)
-    for u, v, k, data in G_eul.edges(keys=True, data=True):
-        snow = data.get('snow', 0) # tries to get value of attribute 'snow', if not found returns 0
+    G_conn = lib.connect(G, False)
+    G_eul = lib.eulerize(G_conn, False)
+    for u, v, data in G_eul.edges(data=True):
+        snow = data.get(
+            "snow", 0
+        )  # tries to get value of attribute 'snow', if not found returns 0
         if snow >= 2.5 and snow <= 15:
-            G_eul[u][v][k]["need_clear"] = True
+            G_eul[u][v][data]["need_clear"] = True
         else:
             G_eul[u][v][k]["need_clear"] = False
     circuit = nx.eulerian_circuit(G_eul, source=src)
     return (G_eul, circuit)
+
 
 # Returns the graph containing the 5 districts
 # To use after parcouring the graph with the drone
