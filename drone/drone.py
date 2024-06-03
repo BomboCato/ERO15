@@ -146,7 +146,6 @@ l = retrieveDistrictsGraph()
 G_all = nx.compose_all(l)
 generateSnow(G_all)
 
-
 def getDistrictGraphSnow(i):
     """
     Allows retrieval of each district's graph while keeping the attribute 'snow' generated in the graph of the entire city
