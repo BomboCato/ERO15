@@ -1,0 +1,41 @@
+#
+# data/snow.py
+#
+
+import lib
+
+class Snow:
+    def __init__(self, snow_data: list, related_district: str) -> None:
+        self.data = snow_data
+        self.related_district = related_district
+
+    def __str__(self) -> str:
+        return f"Snow for '{self.related_district}'"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+def create_snow(snow_data: list, related_district: str) -> Snow:
+    """
+    Create a new snow object and save it to the local storage.
+    """
+    snows: dict[int, Snow] = lib.get_data("snow.pkl")
+    indexes = list(snows.keys())
+    max_ind = max(indexes) if len(indexes) != 0 else 0
+
+    snow = Snow(snow_data, related_district)
+
+    snows[max_ind + 1] = snow
+
+    lib.save_data("snow.pkl", snows)
+
+    return snow
+
+
+def load_snow(id: int) -> Snow | None:
+    """
+    Return a drone analyze from the local storage or None if not found.
+    """
+    snow_data = lib.get_data("snow.pkl")
+
+    return snow_data.get(id, None)
