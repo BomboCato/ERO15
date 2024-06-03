@@ -2,13 +2,15 @@
 # drone/analyze.py
 #
 
+from typing import Tuple
 from data.districts import load_district
 from drone.snow import gen_random_snow
 
-import osmnx as ox
+import networkx as nx
+import drone.lib as lib
 
 
-def analyze(dist_name: str) -> None:
+def analyze(dist_name: str) -> Tuple[nx.MultiGraph, list]:
     """
     Analyze a district and return a circuit.
     """
@@ -16,10 +18,16 @@ def analyze(dist_name: str) -> None:
     district = load_district(dist_name)
 
     snow_dist = gen_random_snow(district)
+    snow_dist_un = snow_dist.graph.to_undirected()
 
-    edge_colors = [
-        "r" if (snow_dist.graph[u][v][k]["snow"] >= 2.5 and snow_dist.graph[u][v][k]["snow"] <= 15)
-        else "b" for u, v, k in snow_dist.graph.edges(keys=True)
-    ]
+    print("Connecting...")
+    snow_conn = lib.connect(snow_dist_un, "virtual")
 
-    ox.plot_graph(snow_dist.graph, edge_color=edge_colors)
+    print("Eulerizing...")
+    snow_eul = lib.eulerize(snow_conn, "virtual")
+
+    print("Getting circuit...")
+    circuit = list(nx.eulerian_circuit(snow_eul))
+
+    return snow_eul, circuit
+

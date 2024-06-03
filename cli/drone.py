@@ -30,4 +30,4 @@ def analyze(
     """
     console.print(f"Analyzing {place}...")
 
-    drone.analyze.analyze(place)
+    snow_eul, circuit = drone.analyze.analyze(place)

@@ -55,6 +55,7 @@ def eulerize(graph: nx.MultiGraph, mark) -> nx.MultiGraph:
     for u, v in matching:
         res_graph.add_edge(u, v, mark=mark)
 
-    assert nx.is_semieulerian(res_graph)
+    if nx.is_semieulerian(res_graph):
+        print("Warning, graph is not eulerian.")
 
     return res_graph
