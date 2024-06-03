@@ -8,3 +8,4 @@ districts/
 data/snow/
 data/routes/
 data/districts/
+*.pkl
