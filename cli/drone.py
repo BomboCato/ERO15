@@ -6,6 +6,9 @@ from typing import Annotated
 from rich.console import Console
 
 import typer
+from data.display import route_image
+from data.districts import District
+from data.route import Route
 import drone.analyze
 import cli.log as log
 
@@ -29,6 +32,11 @@ def analyze(
     Launch the drone and analyze the distict/city.
     """
 
-    log.info(f"CMD: analyze {district}")
+    log.info(f"CMD: analyze '{district}'")
 
-    snow_eul, circuit = drone.analyze.analyze(district)
+    snow_eul, circuit = drone.analyze.analyze_snow(district)
+
+    dist = District("snow_eul", snow_eul)
+    route = Route(circuit, "snow_eul")
+
+    route_image(dist, route, "red", "save")

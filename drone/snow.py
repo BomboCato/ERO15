@@ -6,6 +6,7 @@ import random
 
 from data.districts import District
 
+
 def gen_random_snow(district: District) -> District:
     """
     Return a district with edges having random snow attribute.

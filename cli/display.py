@@ -28,7 +28,9 @@ def district(
     Display a specific district.
     If --output-file [FILEPATH] is provided, store the graph in FILEPATH.
     """
-    log.info(f"CMD: display district '{name}' with output file '{output_file}'")
+    log.info(
+        f"CMD: display district '{name}' with output file '{output_file}'"
+    )
 
     dist = load_district(name)
 
@@ -36,7 +38,11 @@ def district(
         log.info(f"Saving district '{name}' in file '{output_file}'")
 
         ox.plot_graph(
-            dist.graph, save=True, filepath=output_file, node_size=1, show=False
+            dist.graph,
+            save=True,
+            filepath=output_file,
+            node_size=1,
+            show=False,
         )
     else:
         log.info(f"Displaying district '{name}'")

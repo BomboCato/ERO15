@@ -9,7 +9,9 @@ import cli.log as log
 
 
 class District:
-    def __init__(self, name: str, graph: nx.MultiDiGraph) -> None:
+    def __init__(
+        self, name: str, graph: nx.MultiDiGraph | nx.MultiGraph
+    ) -> None:
         self.name = name
         self.graph = graph
 
@@ -23,7 +25,9 @@ class District:
         return self.__str__()
 
 
-def create_district(name: str, graph: nx.MultiDiGraph) -> District:
+def save_district(
+    name: str, graph: nx.MultiDiGraph | nx.MultiGraph
+) -> District:
     """
     Create a new district object and save it to local storage.
     Does not check if district already exist !
@@ -53,6 +57,6 @@ def load_district(name: str) -> District:
     log.info(f"Downloading district '{name}'")
     graph = ox.graph_from_place(name, network_type="drive")
 
-    dist = create_district(name, graph)
+    dist = save_district(name, graph)
 
     return dist

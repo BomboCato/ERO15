@@ -16,8 +16,10 @@ log = logging.getLogger("Rich")
 def info(msg: str) -> None:
     log.info(msg)
 
+
 def warn(msg: str) -> None:
     log.warn(msg)
+
 
 def error(msg: str) -> None:
     log.error(msg)
