@@ -39,4 +39,4 @@ def analyze(
     dist = District("snow_eul", snow_eul)
     route = Route(circuit, "snow_eul")
 
-    route_video(dist, route, "red", "save")
+    route_video(dist, route, "red", "save", 16)
