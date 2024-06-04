@@ -55,5 +55,6 @@ def analyze_snow(dist_name: str) -> Tuple[nx.MultiGraph, list]:
             description="Getting eulerian circuit...", total=None
         )
         circuit = list(nx.eulerian_circuit(snow_eul))
+        progress.remove_task(task_id)
 
         return snow_eul, circuit

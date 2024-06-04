@@ -6,7 +6,7 @@ from typing import Annotated
 from rich.console import Console
 
 import typer
-from data.display import route_image
+from data.display import route_video
 from data.districts import District
 from data.route import Route
 import drone.analyze
@@ -39,4 +39,4 @@ def analyze(
     dist = District("snow_eul", snow_eul)
     route = Route(circuit, "snow_eul")
 
-    route_image(dist, route, "red", "save")
+    route_video(dist, route, "red", "save")
