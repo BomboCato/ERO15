@@ -252,6 +252,7 @@ while len(list_of_nodes) > 1:
         lat1, lon1 = G_all.nodes[node]['y'], G_all.nodes[node]['x']
         lat2, lon2 = G_all.nodes[current_node]['y'], G_all.nodes[current_node]['x']
         length = geodesic((lat1, lon1), (lat2, lon2)).meters
+        total_distance += length
         G_all.add_edge(current_node, node, length=length)
         distance = nx.shortest_path_length(G_all, current_node, node, weight='length')
         G_all.remove_edge(current_node, node)
@@ -260,7 +261,7 @@ while len(list_of_nodes) > 1:
             closest_node = node
 
     G_all.add_edge(current_node, closest_node)
-    total_distance += min_distance
+    # total_distance += min_distance
     list_of_nodes.remove(current_node)
     current_node = closest_node
 
