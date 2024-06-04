@@ -3,13 +3,14 @@ import networkx as nx
 import random
 import scipy as sp
 import sys
-from erolib import connect, euler
+#from erolib import connect, euler
 # from erolib_windows import connect, euler
 from multiprocessing import Process
 import copy
 import lib
 
 filename = "montreal.osm"
+
 
 def saveMontrealGraph(file):
     """
@@ -27,6 +28,7 @@ def retrieveMontrealGraph(file):
     Returns the undirected graph of Montreal stored in the .osm file
     """
     return ox.load_graphml("drone/" + file)
+
 
 # saveMontrealGraph(filename)
 G = retrieveMontrealGraph(filename)
@@ -48,7 +50,8 @@ def saveDistrictsGraph():
     G10 = ox.graph_from_place('Montréal-Nord, Montreal', network_type='drive').to_undirected()
     G11 = ox.graph_from_place('Outremont, Montreal', network_type='drive').to_undirected()
     G12 = ox.graph_from_place('Pierrefonds-Roxboro, Montreal', network_type='drive').to_undirected()
-    G13 = ox.graph_from_place('Rivière-des-Prairies–Pointe-aux-Trembles, Montreal', network_type='drive').to_undirected()
+    G13 = ox.graph_from_place('Rivière-des-Prairies–Pointe-aux-Trembles, Montreal',
+                              network_type='drive').to_undirected()
     G14 = ox.graph_from_place('Rosemont–La Petite-Patrie, Montreal', network_type='drive').to_undirected()
     G15 = ox.graph_from_place('Saint-Laurent, Montreal', network_type='drive').to_undirected()
     G16 = ox.graph_from_place('Saint-Léonard, Montreal', network_type='drive').to_undirected()
@@ -111,6 +114,7 @@ def generateSnow(G):
     for u, v, k in G.edges(keys=True):
         G[u][v][k]["snow"] = random.randint(0, 15)
 
+
 def coloringSnow(G):
     """
     This function is used to draw edges with different colors depending on the level of snow
@@ -120,7 +124,8 @@ def coloringSnow(G):
         if (G[u][v][k]["snow"] >= 2.5 and G[u][v][k]["snow"] <= 15)
         else "b"
     )
-    for u, v, k in G.edges(keys=True)]
+        for u, v, k in G.edges(keys=True)]
+
 
 def coloringNeedClear(G):
     """
@@ -131,7 +136,8 @@ def coloringNeedClear(G):
         if (G[u][v][k]["need_clear"])
         else "b"
     )
-    for u, v, k in G.edges(keys=True)]
+        for u, v, k in G.edges(keys=True)]
+
 
 def transferAttributes(G, G2):
     """
@@ -141,10 +147,13 @@ def transferAttributes(G, G2):
         if G.has_edge(u, v, k):
             G[u][v][k].update(data)
 
-# saveDistrictsGraph()
+
+#saveDistrictsGraph()
 l = retrieveDistrictsGraph()
 G_all = nx.compose_all(l)
+G_all = G_all.to_undirected()
 generateSnow(G_all)
+
 
 def getDistrictGraphSnow(i):
     """
@@ -155,18 +164,21 @@ def getDistrictGraphSnow(i):
     R.remove_edges_from(e for e in G_all.edges if e not in l[i].edges)
     return R
 
+
 def alldistrictsSnow():
     res = []
     for i in range(19):
         res.append(getDistrictGraphSnow(i))
     return res
 
+
 l = alldistrictsSnow()
 
-G_districts = nx.compose_all([l[1], l[5], l[10], l[12], l[16]]) # Graph containing all 5 districts to clear
+G_districts = nx.compose_all([l[1], l[5], l[10], l[12], l[16]])  # Graph containing all 5 districts to clear
 # generateSnow(G)
 
 total_distance = 0
+
 
 # PARCOURS DRONE SUR G (AJOUTER UN ATTRIBUT POUR DIRE SI IL FAUT DENEIGER)
 def drone(G, src=None):
@@ -175,12 +187,12 @@ def drone(G, src=None):
     """
     G_conn = lib.connect(G, False)
     G_eul = lib.eulerize(G_conn, False)
-    for u, v, data in G_eul.edges(data=True):
+    for u, v, k, data in G_eul.edges(keys=True, data=True):
         snow = data.get(
             "snow", 0
         )  # tries to get value of attribute 'snow', if not found returns 0
         if snow >= 2.5 and snow <= 15:
-            G_eul[u][v][data]["need_clear"] = True
+            G_eul[u][v][k]["need_clear"] = True
         else:
             G_eul[u][v][k]["need_clear"] = False
     circuit = nx.eulerian_circuit(G_eul, source=src)
@@ -190,25 +202,50 @@ def drone(G, src=None):
 # Returns the graph containing the 5 districts
 # To use after parcouring the graph with the drone
 def districts_graph():
-    R=G.copy()
+    R = G.copy()
     R.remove_nodes_from(n for n in G_all if n not in G_districts)
     return R
 
 
 # R = districts_graph()
 # ox.plot_graph(G_districts, edge_color=coloringSnow(G_districts))
-(G_eul, circuit) = drone(l[1])
-transferAttributes(G_districts, G_eul)
-(G_eul, circuit) = drone(l[5])
-transferAttributes(G_districts, G_eul)
-(G_eul, circuit) = drone(l[10])
-transferAttributes(G_districts, G_eul)
-(G_eul, circuit) = drone(l[12])
-transferAttributes(G_districts, G_eul)
-(G_eul, circuit) = drone(l[16])
-transferAttributes(G_districts, G_eul)
 
-ox.plot_graph(G_districts, edge_color=coloringNeedClear(G_districts))
+list_of_nodes = []
+
+
+for i in range(19):
+    print(i)
+    (G_eul, circuit) = drone(l[i])
+    if i in [1, 5, 10, 12, 16]:
+        transferAttributes(G_districts, G_eul)
+    list_of_nodes.append(list(circuit)[0][0])
+
+ox.plot_graph(G_all, edge_color=coloringNeedClear(G_all))
+
+# list_of_nodes = [31278805, 224886238, 29237095, 95871978, 32662002, 26232418, 31703077, 109828183, 30914720, 246451758, 437731034, 96049028, 110468282, 29794121, 17052772, 218198366, 32659924, 26233234, 1258707505]
+
+# TODO: Hardcoder les quartiers ou remplacer nx.shortest path par une fonction qui calcule la distance en fonction de weight et pas en fonction du NB de noeuds
+while len(list_of_nodes) > 1:
+    min_distance = float('inf')
+    current_node = list_of_nodes[0]
+    closest_node = None
+
+    for node in list_of_nodes:
+        if node == current_node:
+            continue
+        G_all.add_edge(current_node, node)
+        distance = nx.shortest_path_length(G_all, current_node, node)
+        G_all.remove_edge(current_node, node)
+        if distance < min_distance:
+            min_distance = distance
+            closest_node = node
+
+    G_all.add_edge(current_node, closest_node)
+    total_distance += min_distance
+    list_of_nodes.remove(current_node)
+    current_node = closest_node
+
+ox.plot_graph(G_all, edge_color='r')
 
 # transferAttributes(l[1], G_eul)
 # ox.plot_graph(l[1], edge_color=coloringSnow(l[1]))
