@@ -4,6 +4,7 @@
 
 
 import networkx as nx
+import cli.log as log
 
 
 def connect(graph: nx.MultiGraph, mark) -> nx.MultiGraph:
@@ -30,7 +31,8 @@ def connect(graph: nx.MultiGraph, mark) -> nx.MultiGraph:
 
         res_graph.add_edge(c_u, c_v, mark=mark, snow=0)
 
-    assert nx.is_connected(res_graph)
+    if not nx.is_connected(res_graph):
+        log.warn("Could not return connected graph")
 
     return res_graph
 
@@ -55,7 +57,7 @@ def eulerize(graph: nx.MultiGraph, mark) -> nx.MultiGraph:
     for u, v in matching:
         res_graph.add_edge(u, v, mark=mark)
 
-    if nx.is_semieulerian(res_graph):
-        print("Warning, graph is not eulerian.")
+    if not nx.is_eulerian(res_graph):
+        log.warn("Could not return eulerian graph")
 
     return res_graph

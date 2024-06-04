@@ -7,11 +7,11 @@ from rich.console import Console
 
 import typer
 import drone.analyze
+import cli.log as log
 
 
 app = typer.Typer(
     no_args_is_help=True,
-    add_completion=False,
     help="Drone related computing.",
 )
 
@@ -21,13 +21,14 @@ err_console = Console(stderr=True)
 
 @app.command()
 def analyze(
-    place: Annotated[
+    district: Annotated[
         str, typer.Argument(help="The district/city to analyze.")
     ] = "Montreal",
 ):
     """
     Launch the drone and analyze the distict/city.
     """
-    console.print(f"Analyzing {place}...")
 
-    snow_eul, circuit = drone.analyze.analyze(place)
+    log.info(f"CMD: analyze {district}")
+
+    snow_eul, circuit = drone.analyze.analyze(district)

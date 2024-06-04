@@ -5,6 +5,7 @@
 import networkx as nx
 import osmnx as ox
 import data.lib as lib
+import cli.log as log
 
 
 class District:
@@ -46,10 +47,10 @@ def load_district(name: str) -> District:
     districts: dict[str, District] = lib.get_data("districts.pkl")
 
     if name in districts:
-        print("District already downloaded")
+        log.info("District already downloaded")
         return districts[name]
 
-    print("Downloading district...")
+    log.info(f"Downloading district '{name}'")
     graph = ox.graph_from_place(name, network_type="drive")
 
     dist = create_district(name, graph)
