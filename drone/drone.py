@@ -12,7 +12,6 @@ import lib
 
 filename = "montreal.osm"
 
-
 def saveMontrealGraph(file):
     """
     Saves an undirected graph of Montreal in a .osm file
@@ -176,9 +175,6 @@ l = alldistrictsSnow()
 G_districts = nx.compose_all([l[1], l[5], l[10], l[12], l[16]])  # Graph containing all 5 districts to clear
 # generateSnow(G)
 
-total_distance = 0
-
-
 # PARCOURS DRONE SUR G (AJOUTER UN ATTRIBUT POUR DIRE SI IL FAUT DENEIGER)
 def drone(G, src=None):
     """
@@ -210,17 +206,40 @@ def districts_graph():
 
 list_of_nodes = []
 
+total_distance = 0
 
-for i in range(19):
-    print(i)
+for i in range(16):
     (G_eul, circuit) = drone(l[i])
-    if i in [1, 5, 10, 12, 16]:
-        transferAttributes(G_districts, G_eul)
-    list_of_nodes.append(list(circuit)[0][0])
+    # if i in [1, 5, 10, 12, 16]:
+    circuit = list(circuit)
+    for u, v in circuit:
+        if (u, v) in G_eul.edges():
+            for k in G_eul[u][v]:
+                if 'length' in G_eul[u][v][k]:
+                    total_distance += G_eul[u][v][k]['length']
+                elif 'mark' in G_eul[u][v][k]:
+                    lat1, lon1 = G_eul.nodes[u]['y'], G_eul.nodes[u]['x']
+                    lat2, lon2 = G_eul.nodes[v]['y'], G_eul.nodes[v]['x']
+                    length = geodesic((lat1, lon1), (lat2, lon2)).meters
+                    total_distance += length
+        elif (v, u) in G_eul.edges():
+            for k in G_eul[v][u]:
+                if 'length' in G_eul[v][u][k]:
+                    total_distance += G_eul[v][u][k]['length']
+                elif 'mark' in G_eul[u][v][k]:
+                    lat1, lon1 = G_eul.nodes[u]['y'], G_eul.nodes[u]['x']
+                    lat2, lon2 = G_eul.nodes[v]['y'], G_eul.nodes[v]['x']
+                    length = geodesic((lat1, lon1), (lat2, lon2)).meters
+                    total_distance += length
+    transferAttributes(G_districts, G_eul)
+    node,_ = circuit[0]
+    list_of_nodes.append(node)
 
 ox.plot_graph(G_all, edge_color=coloringNeedClear(G_all))
 
 #list_of_nodes = [31278805, 224886238, 29237095, 95871978, 32662002, 26232418, 31703077, 109828183, 30914720, 246451758, 437731034, 96049028, 110468282, 29794121, 17052772, 218198366, 32659924, 26233234, 1258707505]
+
+
 
 while len(list_of_nodes) > 1:
     min_distance = float('inf')
@@ -245,6 +264,8 @@ while len(list_of_nodes) > 1:
     list_of_nodes.remove(current_node)
     current_node = closest_node
 
+
+print('total_distance: ', total_distance)
 ox.plot_graph(G_all, edge_color='r')
 
 # transferAttributes(l[1], G_eul)
