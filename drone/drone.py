@@ -33,7 +33,6 @@ def retrieveMontrealGraph(file):
 # saveMontrealGraph(filename)
 G = retrieveMontrealGraph(filename)
 
-
 def saveDistrictsGraph():
     """
     Creates and saves a graph for each district in Montreal into a file in the districts/ folder
@@ -50,8 +49,7 @@ def saveDistrictsGraph():
     G10 = ox.graph_from_place('Montréal-Nord, Montreal', network_type='drive').to_undirected()
     G11 = ox.graph_from_place('Outremont, Montreal', network_type='drive').to_undirected()
     G12 = ox.graph_from_place('Pierrefonds-Roxboro, Montreal', network_type='drive').to_undirected()
-    G13 = ox.graph_from_place('Rivière-des-Prairies–Pointe-aux-Trembles, Montreal',
-                              network_type='drive').to_undirected()
+    G13 = ox.graph_from_place('Rivière-des-Prairies–Pointe-aux-Trembles, Montreal', network_type='drive').to_undirected()
     G14 = ox.graph_from_place('Rosemont–La Petite-Patrie, Montreal', network_type='drive').to_undirected()
     G15 = ox.graph_from_place('Saint-Laurent, Montreal', network_type='drive').to_undirected()
     G16 = ox.graph_from_place('Saint-Léonard, Montreal', network_type='drive').to_undirected()
@@ -202,6 +200,8 @@ def drone(G, src=None):
 def districts_graph():
     R = G.copy()
     R.remove_nodes_from(n for n in G_all if n not in G_districts)
+    # R=G.copy()
+    # R.remove_nodes_from(n for n in G if n not in G_all)
     return R
 
 # R = districts_graph()
