@@ -188,9 +188,7 @@ def drone(G, src=None):
     G_conn = lib.connect(G, False)
     G_eul = lib.eulerize(G_conn, False)
     for u, v, k, data in G_eul.edges(keys=True, data=True):
-        snow = data.get(
-            "snow", 0
-        )  # tries to get value of attribute 'snow', if not found returns 0
+        snow = data.get("snow", 0)  # tries to get value of attribute 'snow', if not found returns 0
         if snow >= 2.5 and snow <= 15:
             G_eul[u][v][k]["need_clear"] = True
         else:
@@ -205,7 +203,6 @@ def districts_graph():
     R = G.copy()
     R.remove_nodes_from(n for n in G_all if n not in G_districts)
     return R
-
 
 # R = districts_graph()
 # ox.plot_graph(G_districts, edge_color=coloringSnow(G_districts))
