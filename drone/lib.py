@@ -47,7 +47,8 @@ def eulerize(graph: nx.MultiGraph, mark) -> nx.MultiGraph:
     odd_vertex = [node for node, degree in graph.degree if degree % 2 != 0]
     comp_odd = nx.complete_graph(odd_vertex)
 
-    for u, v in comp_odd.edges: comp_odd[u][v]["weight"] = nx.shortest_path_length(
+    for u, v in comp_odd.edges:
+        comp_odd[u][v]["weight"] = nx.shortest_path_length(
             graph, source=u, target=v
         )
 

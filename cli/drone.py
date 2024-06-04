@@ -27,7 +27,7 @@ def analyze(
     district: Annotated[
         str, typer.Argument(help="The district/city to analyze.")
     ] = "Montreal",
-):
+) -> None:
     """
     Launch the drone and analyze the distict/city.
     """
