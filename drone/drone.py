@@ -34,7 +34,6 @@ def retrieveMontrealGraph(file):
 # saveMontrealGraph(filename)
 G = retrieveMontrealGraph(filename)
 
-
 def saveDistrictsGraph():
     """
     Creates and saves a graph for each district in Montreal into a file in the districts/ folder
@@ -51,8 +50,7 @@ def saveDistrictsGraph():
     G10 = ox.graph_from_place('Montréal-Nord, Montreal', network_type='drive').to_undirected()
     G11 = ox.graph_from_place('Outremont, Montreal', network_type='drive').to_undirected()
     G12 = ox.graph_from_place('Pierrefonds-Roxboro, Montreal', network_type='drive').to_undirected()
-    G13 = ox.graph_from_place('Rivière-des-Prairies–Pointe-aux-Trembles, Montreal',
-                              network_type='drive').to_undirected()
+    G13 = ox.graph_from_place('Rivière-des-Prairies–Pointe-aux-Trembles, Montreal', network_type='drive').to_undirected()
     G14 = ox.graph_from_place('Rosemont–La Petite-Patrie, Montreal', network_type='drive').to_undirected()
     G15 = ox.graph_from_place('Saint-Laurent, Montreal', network_type='drive').to_undirected()
     G16 = ox.graph_from_place('Saint-Léonard, Montreal', network_type='drive').to_undirected()
@@ -189,9 +187,7 @@ def drone(G, src=None):
     G_conn = lib.connect(G, False)
     G_eul = lib.eulerize(G_conn, False)
     for u, v, k, data in G_eul.edges(keys=True, data=True):
-        snow = data.get(
-            "snow", 0
-        )  # tries to get value of attribute 'snow', if not found returns 0
+        snow = data.get("snow", 0)  # tries to get value of attribute 'snow', if not found returns 0
         if snow >= 2.5 and snow <= 15:
             G_eul[u][v][k]["need_clear"] = True
         else:
@@ -205,8 +201,9 @@ def drone(G, src=None):
 def districts_graph():
     R = G.copy()
     R.remove_nodes_from(n for n in G_all if n not in G_districts)
+    # R=G.copy()
+    # R.remove_nodes_from(n for n in G if n not in G_all)
     return R
-
 
 # R = districts_graph()
 # ox.plot_graph(G_districts, edge_color=coloringSnow(G_districts))
