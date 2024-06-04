@@ -3,6 +3,7 @@ import networkx as nx
 import random
 import scipy as sp
 import sys
+from geopy.distance import geodesic
 #from erolib import connect, euler
 # from erolib_windows import connect, euler
 from multiprocessing import Process
@@ -222,9 +223,8 @@ for i in range(19):
 
 ox.plot_graph(G_all, edge_color=coloringNeedClear(G_all))
 
-# list_of_nodes = [31278805, 224886238, 29237095, 95871978, 32662002, 26232418, 31703077, 109828183, 30914720, 246451758, 437731034, 96049028, 110468282, 29794121, 17052772, 218198366, 32659924, 26233234, 1258707505]
+#list_of_nodes = [31278805, 224886238, 29237095, 95871978, 32662002, 26232418, 31703077, 109828183, 30914720, 246451758, 437731034, 96049028, 110468282, 29794121, 17052772, 218198366, 32659924, 26233234, 1258707505]
 
-# TODO: Hardcoder les quartiers ou remplacer nx.shortest path par une fonction qui calcule la distance en fonction de weight et pas en fonction du NB de noeuds
 while len(list_of_nodes) > 1:
     min_distance = float('inf')
     current_node = list_of_nodes[0]
@@ -233,8 +233,11 @@ while len(list_of_nodes) > 1:
     for node in list_of_nodes:
         if node == current_node:
             continue
-        G_all.add_edge(current_node, node)
-        distance = nx.shortest_path_length(G_all, current_node, node)
+        lat1, lon1 = G_all.nodes[node]['y'], G_all.nodes[node]['x']
+        lat2, lon2 = G_all.nodes[current_node]['y'], G_all.nodes[current_node]['x']
+        length = geodesic((lat1, lon1), (lat2, lon2)).meters
+        G_all.add_edge(current_node, node, length=length)
+        distance = nx.shortest_path_length(G_all, current_node, node, weight='length')
         G_all.remove_edge(current_node, node)
         if distance < min_distance:
             min_distance = distance
