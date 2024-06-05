@@ -112,9 +112,12 @@ def analyze_snow_montreal(
 
     total_distance = 0
     list_of_nodes = []
+    list_circuit = []
+    res_circuit = []
 
     for i in range(19):
         _, circuit = drone(l[i])
+        list_circuit.append(list(circuit))
         list_of_nodes.append(list(circuit)[0][0])
 
     # TODO: Hardcoder les quartiers ou remplacer nx.shortest path par une fonction qui calcule la distance en fonction de weight et pas en fonction du NB de noeuds
@@ -133,12 +136,22 @@ def analyze_snow_montreal(
                 min_distance = distance
                 closest_node = node
 
+        c1 = [c for c in list_circuit if c[0][0] == current_node][0]
+        c2 = [c for c in list_circuit if c[0][0] == closest_node][0]
+        res_circuit.extend(c1)
+        res_circuit.append((current_node, closest_node))
+        res_circuit.extend(c2)
         G_all.graph.add_edge(current_node, closest_node)
         total_distance += min_distance
         list_of_nodes.remove(current_node)
         current_node = closest_node
-
-    print(nx.is_eulerian(G_all.graph))
+    snow_list = [
+        (u, v, snow)
+        for u, v, snow in G_all.edges.data("snow", -1)
+        if snow != -1
+    ]
+    snow = Snow(snow_list, "Montreal")
+    return (District("Montreal", G_all), Route(res_circuit, "Montreal"), snow, total_distance)
 
 
 def analyze_snow(dist_name: str) -> Tuple[District, Route, Snow, float]:
