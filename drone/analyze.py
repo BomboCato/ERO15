@@ -116,7 +116,7 @@ def drone(G, progress: Progress, list_circuit: list, index: int, list_eul: list,
             G_eul[u][v][k]["need_clear"] = True
         else:
             G_eul[u][v][k]["need_clear"] = False
-    circuit = nx.eulerian_circuit(G_eul, source=src)
+    circuit = nx.eulerian_circuit(G_eul, source=src, keys=True)
 
 
     list_circuit[index] = list(circuit)
@@ -147,31 +147,27 @@ def analyze_snow_montreal(
     for t in threads:
         t.join()
 
-    for i in [1, 16]:
+    for i in range(19):
         # if i in [1, 5, 10, 12, 16]:
         G_eul = list_eul[i]
-        for u, v in list_circuit[i]:
-            if (u, v) in G_eul.edges():
-                for k in G_eul[u][v]:
-                    if 'length' in G_eul[u][v][k]:
-                        total_distance += G_eul[u][v][k]['length']
-                    elif 'mark' in G_eul[u][v][k]:
-                        lat1, lon1 = G_eul.nodes[u]['y'], G_eul.nodes[u]['x']
-                        lat2, lon2 = G_eul.nodes[v]['y'], G_eul.nodes[v]['x']
-                        length = geodesic((lat1, lon1), (lat2, lon2)).meters
-                        total_distance += length
-                    break
-            elif (v, u) in G_eul.edges():
-                for k in G_eul[v][u]:
-                    if 'length' in G_eul[v][u][k]:
-                        total_distance += G_eul[v][u][k]['length']
-                    elif 'mark' in G_eul[u][v][k]:
-                        lat1, lon1 = G_eul.nodes[u]['y'], G_eul.nodes[u]['x']
-                        lat2, lon2 = G_eul.nodes[v]['y'], G_eul.nodes[v]['x']
-                        length = geodesic((lat1, lon1), (lat2, lon2)).meters
-                        total_distance += length
-                    break
-        node,_ = list_circuit[i][0]
+        for u, v, k in list_circuit[i]:
+            if (u, v, k) in G_eul.edges(keys=True):
+                if 'length' in G_eul[u][v][k]:
+                    total_distance += G_eul[u][v][k]['length']
+                elif 'mark' in G_eul[u][v][k]:
+                    lat1, lon1 = G_eul.nodes[u]['y'], G_eul.nodes[u]['x']
+                    lat2, lon2 = G_eul.nodes[v]['y'], G_eul.nodes[v]['x']
+                    length = geodesic((lat1, lon1), (lat2, lon2)).meters
+                    total_distance += length
+            elif (v, u, k) in G_eul.edges(keys=True):
+                if 'length' in G_eul[v][u][k]:
+                    total_distance += G_eul[v][u][k]['length']
+                elif 'mark' in G_eul[v][u][k]:
+                    lat1, lon1 = G_eul.nodes[u]['y'], G_eul.nodes[u]['x']
+                    lat2, lon2 = G_eul.nodes[v]['y'], G_eul.nodes[v]['x']
+                    length = geodesic((lat1, lon1), (lat2, lon2)).meters
+                    total_distance += length
+        node,_, k = list_circuit[i][0]
         list_of_nodes.append(node)
 
     # TODO: Hardcoder les quartiers ou remplacer nx.shortest path par une fonction qui calcule la distance en fonction de weight et pas en fonction du NB de noeuds
@@ -179,6 +175,7 @@ def analyze_snow_montreal(
         min_distance = float("inf")
         current_node = list_of_nodes[0]
         closest_node = None
+        min_length = 0
 
         for node in list_of_nodes:
             if node == current_node:
@@ -192,14 +189,15 @@ def analyze_snow_montreal(
             if distance < min_distance:
                 min_distance = distance
                 closest_node = node
+                min_length = length
 
+        total_distance += min_length
         c1 = [c for c in list_circuit if c != None and c[0][0] == current_node][0]
         c2 = [c for c in list_circuit if c != None and c[0][0] == closest_node][0]
         res_circuit.extend(c1)
         res_circuit.append((current_node, closest_node))
         res_circuit.extend(c2)
         G_all.graph.add_edge(current_node, closest_node)
-        total_distance += min_distance
         list_of_nodes.remove(current_node)
         current_node = closest_node
     snow_list = [
@@ -261,10 +259,9 @@ def analyze_snow(dist_name: str) -> Tuple[District, Route, Snow, float]:
                 y1 = snow_eul.nodes[u]["y"]
                 x2 = snow_eul.nodes[v]["x"]
                 y2 = snow_eul.nodes[v]["y"]
-                distance += eucl_dist(x1, y1, x2, y2)
+                distance += geodesic((x1, y1), (x2, y2)).meters
             else:
                 distance += length
-
         snow_list = [
             (u, v, snow)
             for u, v, snow in snow_dist_un.edges.data("snow", -1)
