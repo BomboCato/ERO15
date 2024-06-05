@@ -6,12 +6,13 @@ import data.lib as lib
 
 
 class Snow:
-    def __init__(self, snow_data: list, related_district: str) -> None:
+    def __init__(self, snow_data: list, related_district: str, id: int = -1) -> None:
+        self.id = id
         self.data = snow_data
         self.related_district = related_district
 
     def __str__(self) -> str:
-        return f"Snow for '{self.related_district}'"
+        return f"Snow for '{self.related_district} with id {self.id}'"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -25,7 +26,7 @@ def create_snow(snow_data: list, related_district: str) -> Snow:
     indexes = list(snows.keys())
     max_ind = max(indexes) if len(indexes) != 0 else 0
 
-    snow = Snow(snow_data, related_district)
+    snow = Snow(snow_data, related_district, max_ind)
 
     snows[max_ind + 1] = snow
 
