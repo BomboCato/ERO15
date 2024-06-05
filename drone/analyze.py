@@ -129,8 +129,11 @@ def analyze_snow_montreal(
         for node in list_of_nodes:
             if node == current_node:
                 continue
-            G_all.graph.add_edge(current_node, node)
-            distance = nx.shortest_path_length(G_all, current_node, node)
+            lat1, lon1 = G_all.nodes[node]['y'], G_all.nodes[node]['x']
+            lat2, lon2 = G_all.nodes[current_node]['y'], G_all.nodes[current_node]['x']
+            length = geodesic((lat1, lon1), (lat2, lon2)).meters
+            G_all.add_edge(current_node, node, length=length)
+            distance = nx.shortest_path_length(G_all, current_node, node, weight='length')
             G_all.graph.remove_edge(current_node, node)
             if distance < min_distance:
                 min_distance = distance
