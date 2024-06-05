@@ -2,6 +2,7 @@
 # drone/analyze.py
 #
 
+from threading import Thread
 from typing import Tuple
 from data.districts import District, load_district
 from data.route import Route
@@ -14,6 +15,7 @@ from rich.progress import (
     TimeElapsedColumn,
 )
 from rich.console import Console
+from geopy.distance import geodesic
 
 import networkx as nx
 import drone.lib as lib
@@ -82,12 +84,30 @@ def retrieveDistrictsGraph() -> list[District]:
 
 
 # PARCOURS DRONE SUR G (AJOUTER UN ATTRIBUT POUR DIRE SI IL FAUT DENEIGER)
-def drone(G, src=None):
+def drone(G, progress: Progress, list_circuit: list, index: int, list_eul: list, src=None):
     """
     Returns a tuple (G, circuit) where G is the graph with attribute 'need_clear' added and circuit is path taken by the drone
     """
+
+    task = progress.add_task(
+        f"Connecting graph {index}...", total=None
+    )
     G_conn = lib.connect(G, False)
+    progress.remove_task(task)
+    log.info(
+        f"Connect: Added {G_conn.number_of_edges() - G.number_of_edges()} edge(s)"
+    )
+
+    task = progress.add_task(
+        f"Eulerizing graph {index}...", total=None
+    )
     G_eul = lib.eulerize(G_conn, False)
+    progress.remove_task(task)
+    log.info(
+        f"Eulerize: Added {G_eul.number_of_edges() - G_conn.number_of_edges()} edge(s)"
+    )
+
+
     for u, v, k, data in G_eul.edges(keys=True, data=True):
         snow = data.get(
             "snow", 0
@@ -97,8 +117,10 @@ def drone(G, src=None):
         else:
             G_eul[u][v][k]["need_clear"] = False
     circuit = nx.eulerian_circuit(G_eul, source=src)
-    return (G_eul, circuit)
 
+
+    list_circuit[index] = list(circuit)
+    list_eul[index] = G_eul
 
 def analyze_snow_montreal(
     progress: Progress,
@@ -112,13 +134,45 @@ def analyze_snow_montreal(
 
     total_distance = 0
     list_of_nodes = []
-    list_circuit = []
+    list_circuit = [None] * 19
+    list_eul = [None] * 19
     res_circuit = []
 
-    for i in range(19):
-        _, circuit = drone(l[i])
-        list_circuit.append(list(circuit))
-        list_of_nodes.append(list(circuit)[0][0])
+    threads: list[Thread] = []
+
+    for i in [1, 16]:
+        threads.append(Thread(target=drone, args=(l[i], progress, list_circuit, i, list_eul)))
+        threads[-1].start()
+
+    for t in threads:
+        t.join()
+
+    for i in [1, 16]:
+        # if i in [1, 5, 10, 12, 16]:
+        G_eul = list_eul[i]
+        for u, v in list_circuit[i]:
+            if (u, v) in G_eul.edges():
+                for k in G_eul[u][v]:
+                    if 'length' in G_eul[u][v][k]:
+                        total_distance += G_eul[u][v][k]['length']
+                    elif 'mark' in G_eul[u][v][k]:
+                        lat1, lon1 = G_eul.nodes[u]['y'], G_eul.nodes[u]['x']
+                        lat2, lon2 = G_eul.nodes[v]['y'], G_eul.nodes[v]['x']
+                        length = geodesic((lat1, lon1), (lat2, lon2)).meters
+                        total_distance += length
+                    break
+            elif (v, u) in G_eul.edges():
+                for k in G_eul[v][u]:
+                    if 'length' in G_eul[v][u][k]:
+                        total_distance += G_eul[v][u][k]['length']
+                    elif 'mark' in G_eul[u][v][k]:
+                        lat1, lon1 = G_eul.nodes[u]['y'], G_eul.nodes[u]['x']
+                        lat2, lon2 = G_eul.nodes[v]['y'], G_eul.nodes[v]['x']
+                        length = geodesic((lat1, lon1), (lat2, lon2)).meters
+                        total_distance += length
+                    break
+        node,_ = list_circuit[i][0]
+        list_of_nodes.append(node)
 
     # TODO: Hardcoder les quartiers ou remplacer nx.shortest path par une fonction qui calcule la distance en fonction de weight et pas en fonction du NB de noeuds
     while len(list_of_nodes) > 1:
@@ -129,18 +183,18 @@ def analyze_snow_montreal(
         for node in list_of_nodes:
             if node == current_node:
                 continue
-            lat1, lon1 = G_all.nodes[node]['y'], G_all.nodes[node]['x']
-            lat2, lon2 = G_all.nodes[current_node]['y'], G_all.nodes[current_node]['x']
+            lat1, lon1 = G_all.graph.nodes[node]['y'], G_all.graph.nodes[node]['x']
+            lat2, lon2 = G_all.graph.nodes[current_node]['y'], G_all.graph.nodes[current_node]['x']
             length = geodesic((lat1, lon1), (lat2, lon2)).meters
-            G_all.add_edge(current_node, node, length=length)
-            distance = nx.shortest_path_length(G_all, current_node, node, weight='length')
+            G_all.graph.add_edge(current_node, node, length=length)
+            distance = nx.shortest_path_length(G_all.graph, current_node, node, weight='length')
             G_all.graph.remove_edge(current_node, node)
             if distance < min_distance:
                 min_distance = distance
                 closest_node = node
 
-        c1 = [c for c in list_circuit if c[0][0] == current_node][0]
-        c2 = [c for c in list_circuit if c[0][0] == closest_node][0]
+        c1 = [c for c in list_circuit if c != None and c[0][0] == current_node][0]
+        c2 = [c for c in list_circuit if c != None and c[0][0] == closest_node][0]
         res_circuit.extend(c1)
         res_circuit.append((current_node, closest_node))
         res_circuit.extend(c2)
@@ -150,11 +204,11 @@ def analyze_snow_montreal(
         current_node = closest_node
     snow_list = [
         (u, v, snow)
-        for u, v, snow in G_all.edges.data("snow", -1)
+        for u, v, snow in G_all.graph.edges.data("snow", -1)
         if snow != -1
     ]
     snow = Snow(snow_list, "Montreal")
-    return (District("Montreal", G_all), Route(res_circuit, "Montreal"), snow, total_distance)
+    return (District("Montreal", G_all.graph), Route(res_circuit, "Montreal"), snow, total_distance)
 
 
 def analyze_snow(dist_name: str) -> Tuple[District, Route, Snow, float]:
@@ -167,8 +221,8 @@ def analyze_snow(dist_name: str) -> Tuple[District, Route, Snow, float]:
         TextColumn("[progress.description]{task.description}"),
         TimeElapsedColumn(),
     ) as progress:
-        # if dist_name == "Montreal":
-        #     return analyze_snow_montreal(progress)
+        if dist_name == "Montreal":
+            return analyze_snow_montreal(progress)
 
         district = load_district(dist_name)
 

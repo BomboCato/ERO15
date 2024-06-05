@@ -6,8 +6,6 @@ from typing import Annotated, Optional
 from rich.console import Console
 from rich.table import Table
 from data.display import route_video
-from data.districts import District
-from data.route import Route
 
 import typer
 from data.snow import create_snow
