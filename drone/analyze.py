@@ -113,8 +113,8 @@ def analyze_snow_montreal(
     total_distance = 0
     list_of_nodes = []
 
-    for i in range(1):
-        _, circuit = drone(l[1])
+    for i in range(19):
+        _, circuit = drone(l[i])
         list_of_nodes.append(list(circuit)[0][0])
 
     # TODO: Hardcoder les quartiers ou remplacer nx.shortest path par une fonction qui calcule la distance en fonction de weight et pas en fonction du NB de noeuds
