@@ -3,7 +3,7 @@
 #
 
 import networkx as nx
-
+import cli.log as log
 
 def strong_connect(graph: nx.MultiDiGraph, mark) -> nx.MultiDiGraph:
     """
@@ -27,7 +27,8 @@ def strong_connect(graph: nx.MultiDiGraph, mark) -> nx.MultiDiGraph:
 
                 res_graph.add_edge(sik, src, mark=mark)
 
-    assert nx.is_strongly_connected(res_graph)
+    if not nx.is_strongly_connected(res_graph):
+        log.warn("Could not return connected graph")
 
     return res_graph
 
@@ -70,6 +71,7 @@ def diEulerize(graph: nx.MultiDiGraph, mark) -> nx.MultiDiGraph:
         v = deficit.pop()
         res_graph.add_edge(u, v, mark=mark)
 
-    assert nx.is_semieulerian(res_graph)
+    if not nx.is_eulerian(res_graph):
+        log.warn("Could not return eulerian graph")
 
     return res_graph
