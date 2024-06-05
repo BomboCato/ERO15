@@ -84,29 +84,31 @@ def retrieveDistrictsGraph() -> list[District]:
 
 
 # PARCOURS DRONE SUR G (AJOUTER UN ATTRIBUT POUR DIRE SI IL FAUT DENEIGER)
-def drone(G, progress: Progress, list_circuit: list, index: int, list_eul: list, src=None):
+def drone(
+    G,
+    progress: Progress,
+    list_circuit: list,
+    index: int,
+    list_eul: list,
+    src=None,
+):
     """
     Returns a tuple (G, circuit) where G is the graph with attribute 'need_clear' added and circuit is path taken by the drone
     """
 
-    task = progress.add_task(
-        f"Connecting graph {index}...", total=None
-    )
+    task = progress.add_task(f"Connecting graph {index}...", total=None)
     G_conn = lib.connect(G, False)
     progress.remove_task(task)
     log.info(
         f"Connect: Added {G_conn.number_of_edges() - G.number_of_edges()} edge(s)"
     )
 
-    task = progress.add_task(
-        f"Eulerizing graph {index}...", total=None
-    )
+    task = progress.add_task(f"Eulerizing graph {index}...", total=None)
     G_eul = lib.eulerize(G_conn, False)
     progress.remove_task(task)
     log.info(
         f"Eulerize: Added {G_eul.number_of_edges() - G_conn.number_of_edges()} edge(s)"
     )
-
 
     for u, v, k, data in G_eul.edges(keys=True, data=True):
         snow = data.get(
@@ -118,9 +120,9 @@ def drone(G, progress: Progress, list_circuit: list, index: int, list_eul: list,
             G_eul[u][v][k]["need_clear"] = False
     circuit = nx.eulerian_circuit(G_eul, source=src, keys=True)
 
-
     list_circuit[index] = list(circuit)
     list_eul[index] = G_eul
+
 
 def analyze_snow_montreal(
     progress: Progress,
@@ -140,8 +142,13 @@ def analyze_snow_montreal(
 
     threads: list[Thread] = []
 
-    for i in [1, 16]:
-        threads.append(Thread(target=drone, args=(l[i], progress, list_circuit, i, list_eul)))
+    for i in range(19):
+        threads.append(
+            Thread(
+                target=drone,
+                args=(l[i], progress, list_circuit, i, list_eul),
+            )
+        )
         threads[-1].start()
 
     for t in threads:
@@ -152,22 +159,22 @@ def analyze_snow_montreal(
         G_eul = list_eul[i]
         for u, v, k in list_circuit[i]:
             if (u, v, k) in G_eul.edges(keys=True):
-                if 'length' in G_eul[u][v][k]:
-                    total_distance += G_eul[u][v][k]['length']
-                elif 'mark' in G_eul[u][v][k]:
-                    lat1, lon1 = G_eul.nodes[u]['y'], G_eul.nodes[u]['x']
-                    lat2, lon2 = G_eul.nodes[v]['y'], G_eul.nodes[v]['x']
+                if "length" in G_eul[u][v][k]:
+                    total_distance += G_eul[u][v][k]["length"]
+                elif "mark" in G_eul[u][v][k]:
+                    lat1, lon1 = G_eul.nodes[u]["y"], G_eul.nodes[u]["x"]
+                    lat2, lon2 = G_eul.nodes[v]["y"], G_eul.nodes[v]["x"]
                     length = geodesic((lat1, lon1), (lat2, lon2)).meters
                     total_distance += length
             elif (v, u, k) in G_eul.edges(keys=True):
-                if 'length' in G_eul[v][u][k]:
-                    total_distance += G_eul[v][u][k]['length']
-                elif 'mark' in G_eul[v][u][k]:
-                    lat1, lon1 = G_eul.nodes[u]['y'], G_eul.nodes[u]['x']
-                    lat2, lon2 = G_eul.nodes[v]['y'], G_eul.nodes[v]['x']
+                if "length" in G_eul[v][u][k]:
+                    total_distance += G_eul[v][u][k]["length"]
+                elif "mark" in G_eul[v][u][k]:
+                    lat1, lon1 = G_eul.nodes[u]["y"], G_eul.nodes[u]["x"]
+                    lat2, lon2 = G_eul.nodes[v]["y"], G_eul.nodes[v]["x"]
                     length = geodesic((lat1, lon1), (lat2, lon2)).meters
                     total_distance += length
-        node,_, k = list_circuit[i][0]
+        node, _, k = list_circuit[i][0]
         list_of_nodes.append(node)
 
     # TODO: Hardcoder les quartiers ou remplacer nx.shortest path par une fonction qui calcule la distance en fonction de weight et pas en fonction du NB de noeuds
@@ -180,11 +187,19 @@ def analyze_snow_montreal(
         for node in list_of_nodes:
             if node == current_node:
                 continue
-            lat1, lon1 = G_all.graph.nodes[node]['y'], G_all.graph.nodes[node]['x']
-            lat2, lon2 = G_all.graph.nodes[current_node]['y'], G_all.graph.nodes[current_node]['x']
+            lat1, lon1 = (
+                G_all.graph.nodes[node]["y"],
+                G_all.graph.nodes[node]["x"],
+            )
+            lat2, lon2 = (
+                G_all.graph.nodes[current_node]["y"],
+                G_all.graph.nodes[current_node]["x"],
+            )
             length = geodesic((lat1, lon1), (lat2, lon2)).meters
             G_all.graph.add_edge(current_node, node, length=length)
-            distance = nx.shortest_path_length(G_all.graph, current_node, node, weight='length')
+            distance = nx.shortest_path_length(
+                G_all.graph, current_node, node, weight="length"
+            )
             G_all.graph.remove_edge(current_node, node)
             if distance < min_distance:
                 min_distance = distance
@@ -192,8 +207,16 @@ def analyze_snow_montreal(
                 min_length = length
 
         total_distance += min_length
-        c1 = [c for c in list_circuit if c != None and c[0][0] == current_node][0]
-        c2 = [c for c in list_circuit if c != None and c[0][0] == closest_node][0]
+        c1 = [
+            c
+            for c in list_circuit
+            if c != None and c[0][0] == current_node
+        ][0]
+        c2 = [
+            c
+            for c in list_circuit
+            if c != None and c[0][0] == closest_node
+        ][0]
         res_circuit.extend(c1)
         res_circuit.append((current_node, closest_node))
         res_circuit.extend(c2)
@@ -206,7 +229,12 @@ def analyze_snow_montreal(
         if snow != -1
     ]
     snow = Snow(snow_list, "Montreal")
-    return (District("Montreal", G_all.graph), Route(res_circuit, "Montreal"), snow, total_distance)
+    return (
+        District("Montreal", G_all.graph),
+        Route(res_circuit, "Montreal"),
+        snow,
+        total_distance,
+    )
 
 
 def analyze_snow(dist_name: str) -> Tuple[District, Route, Snow, float]:

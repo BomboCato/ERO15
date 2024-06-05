@@ -51,7 +51,7 @@ def load_district(name: str) -> District:
     districts: dict[str, District] = lib.get_data("districts.pkl")
 
     if name in districts:
-        log.info("District already downloaded")
+        log.info(f"District {name} already downloaded")
         return districts[name]
 
     log.info(f"Downloading district '{name}'")

@@ -72,4 +72,3 @@ def analyze(
     snow = create_snow(snow.data, snow.related_district)
 
     log.info(f"Generated snow data for {district} with id {snow.id}")
-

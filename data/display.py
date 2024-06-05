@@ -2,9 +2,17 @@
 # data/display.py
 #
 
+from multiprocessing.pool import AsyncResult
 from data.districts import District
 from data.route import Route
-from rich.progress import Progress
+from rich.progress import (
+    Progress,
+    SpinnerColumn,
+    TaskID,
+    TextColumn,
+    TimeElapsedColumn,
+)
+from multiprocessing import Pool
 
 import osmnx as ox
 import cli.log as log
@@ -12,7 +20,7 @@ import tempfile
 import os
 import matplotlib.pyplot as plt
 import matplotlib
-import threading
+import networkx as nx
 
 
 def district_image(district: District, filename: str) -> None:
@@ -85,33 +93,27 @@ def _update_edge_colors(
 
 
 def _route_video_thread(
-    district: District,
-    route: Route,
+    graph: nx.MultiGraph,
+    route: list,
     route_color: str,
     tmp_dir: str,
     begin: int,
     nb_per_threads: int,
-    progress: Progress,
 ) -> None:
 
-    edges = list(district.graph.edges())
+    edges = list(graph.edges())
 
-    edge_colors = ["w" for _ in route.route]
-    for u, v in route.route[:begin]:
+    edge_colors = ["w" for _ in route]
+    for u, v in route[:begin]:
         _update_edge_colors(edge_colors, u, v, edges, route_color)
 
     img_nb = begin
 
-    task = progress.add_task(
-        f"Generating images {begin}-{begin + nb_per_threads - 1}",
-        total=min(begin + nb_per_threads, len(route.route)) - begin,
-    )
-
-    for u, v in route.route[begin : begin + nb_per_threads]:
+    for u, v in route[begin : begin + nb_per_threads]:
         _update_edge_colors(edge_colors, u, v, edges, route_color)
 
         ox.plot_graph(
-            district.graph,
+            graph,
             save=True,
             filepath=tmp_dir + "/" + str(img_nb) + ".png",
             node_size=1,
@@ -122,8 +124,6 @@ def _route_video_thread(
         plt.close()
 
         img_nb += 1
-
-        progress.update(task, advance=1)
 
 
 def route_video(
@@ -155,35 +155,44 @@ def route_video(
 
     with tempfile.TemporaryDirectory() as tmp_dir:
 
-        threads: list[threading.Thread] = []
+        results: list[AsyncResult] = []
+        tasks: list[TaskID] = []
         beg = 0
         l = len(route.route)
         nb_per_threads = (l // nb_threads) + (l % nb_threads != 0)
 
-        with Progress() as progress:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            TimeElapsedColumn(),
+        ) as progress, Pool(nb_threads) as pool:
             for _ in range(nb_threads):
-                threads.append(
-                    threading.Thread(
-                        target=_route_video_thread,
-                        args=(
-                            district,
-                            route,
+                tasks.append(
+                    progress.add_task(
+                        f"Generating images {beg}-{beg + nb_per_threads}",
+                        total=min(beg + nb_per_threads, len(route.route))
+                        - beg,
+                    )
+                )
+                results.append(
+                    pool.apply_async(
+                        _route_video_thread,
+                        (
+                            district.graph,
+                            route.route,
                             route_color,
                             tmp_dir,
                             beg,
                             nb_per_threads,
-                            progress,
                         ),
                     )
                 )
 
                 beg += nb_per_threads
 
-            for thread in threads:
-                thread.start()
-
-            for thread in threads:
-                thread.join()
+            for i in range(nb_threads):
+                results[i].get()
+                progress.stop_task(tasks[i])
 
         log.info("Calling ffmpeg on generated images")
         os.system(

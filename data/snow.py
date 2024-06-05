@@ -6,7 +6,9 @@ import data.lib as lib
 
 
 class Snow:
-    def __init__(self, snow_data: list, related_district: str, id: int = -1) -> None:
+    def __init__(
+        self, snow_data: list, related_district: str, id: int = -1
+    ) -> None:
         self.id = id
         self.data = snow_data
         self.related_district = related_district
