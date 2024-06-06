@@ -3,9 +3,11 @@
 #
 
 from multiprocessing.pool import AsyncResult
-from lib.districts import District
+from multiprocessing import Pool
+from rich.console import Console
+from lib.districts import District, load_district
 from lib.route import Route
-from lib.snow import load_snow
+from lib.snow import load_snow, Snow
 from rich.progress import (
     Progress,
     SpinnerColumn,
@@ -13,7 +15,6 @@ from rich.progress import (
     TextColumn,
     TimeElapsedColumn,
 )
-from multiprocessing import Pool
 
 import osmnx as ox
 import lib.log as log
@@ -24,43 +25,72 @@ import matplotlib
 import networkx as nx
 import typer
 
+console = Console()
 
-def display_snow(id: int, snow_color: str, road_color: str) -> None:
+
+def display_snow(snow: Snow, snow_color: str, road_color: str) -> None:
     """
-    Display the snow @id from the related district.
+    Display the @snow from the related district.
     @snow_color and @road_color should be different.
     """
+
+    district, edge_colors = _main_snow(snow, snow_color, road_color)
+
+    ox.plot_graph(district.graph, node_size=1, edge_color=edge_colors)
+
+
+def save_snow(
+    snow: Snow, snow_color: str, road_color: str, filename: str
+) -> None:
+    """
+    Save the @snow from the related district in @filename.
+    @snow_color and @road_color should be different.
+    """
+
+    district, edge_colors = _main_snow(snow, snow_color, road_color)
+
+    ox.plot_graph(
+        district.graph,
+        save=True,
+        show=False,
+        filepath=filename,
+        node_size=1,
+        edge_color=edge_colors,
+    )
+
+
+def _main_snow(
+    snow: Snow, snow_color: str, road_color: str
+) -> tuple[District, list[str]]:
 
     if snow_color == road_color:
         log.warn("snow-color and road-color should be different.")
 
-    snow = load_snow(id)
-    if not snow:
-        log.error(f"Snow id {id} does not exists. You must specify an known snow id.")
-        raise typer.Exit()
-        
+    district = load_district(snow.related_district)
+    snow_tuples = [tup[:3] for tup in snow.data]
 
+    edge_colors = [
+        snow_color if (u, v, k) in snow_tuples else road_color
+        for u, v, k in district.graph.edges(keys=True)
+    ]
 
+    return district, edge_colors
 
 
 def save_image_district(district: District, filename: str) -> None:
     """
     Save the @district as a png image in @filename
     """
-    output_file = filename + ".png"
-
-    log.info(f"Saving district '{district.name}' in file '{output_file}'")
-
     ox.plot_graph(
         district.graph,
         save=True,
-        filepath=output_file,
+        filepath=filename,
         node_size=1,
         show=False,
     )
 
 
-def save_route_image(
+def save_image_route(
     district: District, route: Route, route_color: str, filename: str
 ) -> None:
     """
@@ -82,10 +112,6 @@ def save_route_image(
         )
         for u, v, k in district.graph.edges(keys=True)
     ]
-
-    log.info(
-        f"Saving district '{district.name}' with route in file '{output_file}'"
-    )
 
     ox.plot_graph(
         district.graph,
@@ -122,7 +148,6 @@ def _route_video_thread(
     begin: int,
     nb_per_threads: int,
 ) -> None:
-
     edges = list(graph.edges(keys=True))
 
     edge_colors = ["w" for _ in edges]
@@ -148,7 +173,7 @@ def _route_video_thread(
         img_nb += 1
 
 
-def save_route_video(
+def save_video_route(
     district: District,
     route: Route,
     route_color: str,

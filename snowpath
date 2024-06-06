@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
 
+import os
 from typing import Optional
+
+import osmnx as ox
+import typer
+from rich.console import Console
 from rich.table import Table
 from typing_extensions import Annotated
-from rich.console import Console
-from lib.display import save_route_video
-from lib.districts import load_district
-from lib.snow import create_snow
-from drone.analyze import analyze_snow
-from snowplow.clear import clear_eul
 
-import typer
-import os
 import lib.log as log
-import osmnx as ox
-
-
-
+from drone.analyze import analyze_snow
+from lib.display import (
+    display_snow,
+    save_snow,
+    save_image_district,
+)
+from lib.districts import load_district
+from lib.snow import create_snow, load_snow
+from snowplow.clear import clear_eul
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 display_app = typer.Typer(no_args_is_help=True, add_completion=False)
@@ -28,7 +30,7 @@ err_console = Console(stderr=True)
 def delete_data_callback(value: bool) -> None:
     if value:
         if os.path.exists("lib/districts.pkl"):
-            log.info("Deleting lib/ditricts.pkl")
+            log.info("Deleting lib/districts.pkl")
             os.remove("lib/districts.pkl")
         if os.path.exists("lib/routes.pkl"):
             log.info("Deleting lib/routes.pkl")
@@ -41,42 +43,29 @@ def delete_data_callback(value: bool) -> None:
 
 @app.callback()
 def main(
-    _: Annotated[
-        Optional[bool],
-        typer.Option(
-            "--delete-data",
-            callback=delete_data_callback,
-            help="Remove saved data.",
-        ),
-    ] = None
+        _: Annotated[
+            Optional[bool],
+            typer.Option(
+                "--delete-data",
+                callback=delete_data_callback,
+                help="Remove saved data.",
+            ),
+        ] = None
 ) -> None:
     pass
 
-@app.command(help="Drone related computing.")
+
+@app.command(help="Drone related computing.", no_args_is_help=True)
 def drone(
-    district: Annotated[
-        str, typer.Argument(help="The district/city to analyze.")
-    ] = "Montreal",
-    video: Annotated[
-        Optional[str],
-        typer.Option(
-            help="Generate a video that represents the drone route. Save it to [VIDEO].mp4"
-        ),
-    ] = None,
-    nb_threads: Annotated[
-        int,
-        typer.Option(
-            help="Number of threads to use when eulerizing or video generation"
-        ),
-    ] = 1,
+        district_name: Annotated[
+            str, typer.Argument(help="The district/city to analyze.")
+        ],
 ) -> None:
     """
-    Launch the drone and analyze the distict/city.
+    Launch the drone and analyze the district/city.
     """
 
-    log.info(f"CMD: drone analyze '{district}' threads: '{nb_threads}'")
-
-    dist_snow, route, snow, distance = analyze_snow(district)
+    dist_snow, route, snow_data, distance = analyze_snow(district_name)
     table = Table(title="Results")
 
     table.add_column("District")
@@ -86,73 +75,107 @@ def drone(
     table.add_column("Cost")
 
     table.add_row(
-        district,
+        district_name,
         f"{round(distance, 2)}m",
         "60km/h",
         f"{round(distance / 1000 / 60, 2)}h",
         f"{100 + round(0.01 * (distance / 1000), 2)}€",
     )
 
-    if video:
-        log.info("Generating video")
-        save_route_video(dist_snow, route, "red", video, nb_threads, 16)
-
     console.print(table)
 
-    snow = create_snow(snow.data, snow.related_district)
+    snow_data = create_snow(snow_data.data, snow_data.related_district)
 
-    log.info(f"Generated snow data for '{district}' with id {snow.id}")
+    log.info(f"Generated snow data for '{district_name}' with id {snow_data.id}")
 
 
-@app.command(help="Display districts, routes and snow data.")
-def display(
-    name: Annotated[
-        str, typer.Argument(help="The district name to display.")
-    ],
-    output_file: Annotated[
-        str, typer.Option(help="File name to save the graph image.")
-    ] = "",
+@display_app.command(help="Display/save the specified district.", no_args_is_help=True)
+def district(
+        name: Annotated[
+            str, typer.Argument(help="The district name to display/save.")
+        ],
+        output: Annotated[
+            str, typer.Option(help="File name to save the district image.")
+        ] = None,
 ) -> None:
     """
-    Display a specific district.
-    If --output-file [FILEPATH] is provided, store the graph in FILEPATH.
+    Display/save a specific district.
+    If --output [FILEPATH] is provided, store the graph in FILEPATH.
     """
-    log.info(
-        f"CMD: display district '{name}' with output file '{output_file}'"
-    )
-
     dist = load_district(name)
 
-    if output_file != "":
-        log.info(f"Saving district '{name}' in file '{output_file}'")
-
-        ox.plot_graph(
-            dist.graph,
-            save=True,
-            filepath=output_file,
-            node_size=1,
-            show=False,
-        )
-    else:
+    if output:
         log.info(f"Displaying district '{name}'")
 
         ox.plot_graph(dist.graph)
+    else:
+        log.info(f"Saving district '{name}' in '{output}'")
+
+        save_image_district(dist, output)
 
 
-@app.command(help="Snowplow related computing.")
+@display_app.command(help="Display/save snow data.", no_args_is_help=True)
+def snow(
+        snow_id: Annotated[
+            int,
+            typer.Argument(
+                help="The snow id to display/save. The id must exist in the database."
+            ),
+        ],
+        snow_color: Annotated[
+            str, typer.Option(help="The road color when there is snow.")
+        ] = "cyan",
+        road_color: Annotated[
+            str, typer.Option(help="The road color when there is not snow.")
+        ] = "white",
+        output: Annotated[
+            str, typer.Option(help="The output file to save the snow data.")
+        ] = None,
+) -> None:
+    """
+    Display/save snow data.
+    """
+
+    snow_data = load_snow(snow_id)
+    if not snow_data:
+        log.error(
+            f"Snow id {snow_id} does not exists. You must specify an known snow id."
+        )
+        raise typer.Exit()
+
+    if output:
+        log.info(
+            f"CMD: save snow from '{snow_data.related_district}' with id '{snow_data.id}' in '{output}', "
+            f"snow-color: '{snow_color}', road_color: '{road_color}'"
+        )
+        save_snow(snow_data, snow_color, road_color, output)
+    else:
+        log.info(
+            f"CMD: display snow from '{snow_data.related_district}' with id '{snow_data.id}', "
+            f"snow-color: '{snow_color}', road_color: '{road_color}'"
+        )
+        display_snow(snow_data, snow_color, road_color)
+
+
+@app.command(help="Snowplow related computing.", no_args_is_help=True)
 def snowplow(
-    id: Annotated[
-        int,
-        typer.Argument(
-            help="The id of the snow data generated by the drone."
-        ),
-    ] = 0
+        snow_id: Annotated[
+            int,
+            typer.Argument(
+                help="The id of the snow data generated by the drone."
+            ),
+        ]
 ) -> None:
     """
     Start the snowplows.
     """
-    clear_eul(id)
+    clear_eul(snow_id)
+
 
 if __name__ == "__main__":
-    app.add_typer(display_app, name="display", help="Display districts, routes and snow data.")
+    app.add_typer(
+        display_app,
+        name="display",
+        help="Display districts, routes and snow data.",
+    )
     app()

@@ -9,3 +9,6 @@ data/snow/
 data/routes/
 data/districts/
 *.pkl
+.idea/
+*.png
+*.mp4
