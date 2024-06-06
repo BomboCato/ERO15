@@ -5,6 +5,7 @@
 from multiprocessing.pool import AsyncResult
 from lib.districts import District
 from lib.route import Route
+from lib.snow import load_snow
 from rich.progress import (
     Progress,
     SpinnerColumn,
@@ -21,9 +22,28 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib
 import networkx as nx
+import typer
 
 
-def district_image(district: District, filename: str) -> None:
+def display_snow(id: int, snow_color: str, road_color: str) -> None:
+    """
+    Display the snow @id from the related district.
+    @snow_color and @road_color should be different.
+    """
+
+    if snow_color == road_color:
+        log.warn("snow-color and road-color should be different.")
+
+    snow = load_snow(id)
+    if not snow:
+        log.error(f"Snow id {id} does not exists. You must specify an known snow id.")
+        raise typer.Exit()
+        
+
+
+
+
+def save_image_district(district: District, filename: str) -> None:
     """
     Save the @district as a png image in @filename
     """
@@ -40,7 +60,7 @@ def district_image(district: District, filename: str) -> None:
     )
 
 
-def route_image(
+def save_route_image(
     district: District, route: Route, route_color: str, filename: str
 ) -> None:
     """
@@ -128,7 +148,7 @@ def _route_video_thread(
         img_nb += 1
 
 
-def route_video(
+def save_route_video(
     district: District,
     route: Route,
     route_color: str,

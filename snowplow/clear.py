@@ -2,10 +2,9 @@
 # snowplow/clear.py
 #
 
-from lib.districts import District, load_district
+from lib.districts import load_district
 from lib.route import Route
 from lib.snow import load_snow
-from lib.display import route_video, route_image
 from rich.console import Console
 
 import osmnx as ox
@@ -26,17 +25,33 @@ def transferAttributes(G, G2):
             G[v][u][k].update(data)
 
 
-def clear(id):
+def clear_path(id: int) -> Route | None:
+    """
+    Return the route that a snowplow should take to
+    remove the snow with id @id.
+    Does not eulerize the graph but use shortest_path
+    to build the circuit.
+    """
+
+    snow = load_snow(id)
+    if not snow:
+        return None
+
+    dist_snow = load_district(snow.related_district)
+
+    ox.plot_graph(dist_snow.graph)
+
+
+def clear_eul(id: int) -> Route | None:
     """ """
     snow = load_snow(id)
     if snow == None:
-        return
+        return None
 
     dist_all = load_district("Montreal")
     G_all = dist_all.graph
     G_di = load_district(snow.related_district).graph
 
-    console.print(snow.data)
     list_snow = [
         (u, v, k)
         for u, v, k, data in snow.data
@@ -44,7 +59,6 @@ def clear(id):
     ]
     snow_graph = nx.edge_subgraph(G_di, list_snow)
 
-    ox.plot_graph(snow_graph)
     G_conn = lib.strong_connect(snow_graph, "virtual")
     G_eul = lib.diEulerize(G_conn, "virtual")
 
@@ -69,7 +83,5 @@ def clear(id):
             real_circuit.append((u, v, k))
 
     route = Route(real_circuit, snow.related_district)
-    route_video(
-        District("Verdun, Montreal", G_di), route, "red", "test", 16, 64
-    )
-    route_image(District("Verdun, Montreal", G_di), route, "red", "test")
+
+    return route

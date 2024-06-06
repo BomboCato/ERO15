@@ -4,11 +4,11 @@ from typing import Optional
 from rich.table import Table
 from typing_extensions import Annotated
 from rich.console import Console
-from lib.display import route_video
+from lib.display import save_route_video
 from lib.districts import load_district
 from lib.snow import create_snow
 from drone.analyze import analyze_snow
-from snowplow.clear import clear
+from snowplow.clear import clear_eul
 
 import typer
 import os
@@ -18,7 +18,9 @@ import osmnx as ox
 
 
 
-app = typer.Typer(no_args_is_help=True)
+app = typer.Typer(no_args_is_help=True, add_completion=False)
+display_app = typer.Typer(no_args_is_help=True, add_completion=False)
+
 console = Console()
 err_console = Console(stderr=True)
 
@@ -93,13 +95,13 @@ def drone(
 
     if video:
         log.info("Generating video")
-        route_video(dist_snow, route, "red", video, nb_threads, 16)
+        save_route_video(dist_snow, route, "red", video, nb_threads, 16)
 
     console.print(table)
 
     snow = create_snow(snow.data, snow.related_district)
 
-    log.info(f"Generated snow data for {district} with id {snow.id}")
+    log.info(f"Generated snow data for '{district}' with id {snow.id}")
 
 
 @app.command(help="Display districts, routes and snow data.")
@@ -149,7 +151,8 @@ def snowplow(
     """
     Start the snowplows.
     """
-    clear(id)
+    clear_eul(id)
 
 if __name__ == "__main__":
+    app.add_typer(display_app, name="display", help="Display districts, routes and snow data.")
     app()
