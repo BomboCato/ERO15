@@ -2,19 +2,17 @@
 # cli/snowplow.py
 #
 
+from typing import Annotated
+from rich.console import Console
+
 import typer
+import snowplow.clear
+
 
 app = typer.Typer(
     no_args_is_help=True,
     help="Snowplow related computing.",
 )
-
-from typing import Annotated, Optional
-from rich.console import Console
-from rich.table import Table
-
-import snowplow.clear
-import cli.log as log
 
 console = Console()
 err_console = Console(stderr=True)

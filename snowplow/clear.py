@@ -1,28 +1,16 @@
 #
-# snowplow/snowplow.py
+# snowplow/clear.py
 #
 
-from threading import Thread
-from typing import Tuple
 from data.districts import District, load_district
 from data.route import Route
-from data.snow import Snow, load_snow
+from data.snow import load_snow
 from data.display import route_video, route_image
-from rich.progress import (
-    Progress,
-    SpinnerColumn,
-    TextColumn,
-    TimeElapsedColumn,
-)
 from rich.console import Console
-from geopy.distance import geodesic
 
 import osmnx as ox
 import networkx as nx
 import snowplow.lib as lib
-import cli.log as log
-import math
-import drone.analyze as analyze
 
 console = Console()
 

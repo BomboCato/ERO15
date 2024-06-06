@@ -6,9 +6,9 @@ from typing import Annotated, Optional
 from rich.console import Console
 from rich.table import Table
 from data.display import route_video
+from data.snow import create_snow
 
 import typer
-from data.snow import create_snow
 import drone.analyze
 import cli.log as log
 

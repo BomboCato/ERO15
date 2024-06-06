@@ -2,7 +2,6 @@
 # drone/lib.py
 #
 
-import osmnx as ox
 import networkx as nx
 import cli.log as log
 
