@@ -80,16 +80,19 @@ def route_image(
 def _update_edge_colors(
     edge_colors: list[str], u: int, v: int, edges: list, route_color: str
 ) -> None:
-    if (u, v) in edges:
-        ind = edges.index((u, v))
-        while edge_colors[ind] == route_color:
-            ind = edges.index((u, v), ind + 1)
-        edge_colors[ind] = route_color
-    else:
-        ind = edges.index((v, u))
-        while edge_colors[ind] == route_color:
-            ind = edges.index((v, u), ind + 1)
-        edge_colors[ind] = route_color
+    try:
+        if (u, v) in edges:
+            ind = edges.index((u, v))
+            while edge_colors[ind] == route_color:
+                ind = edges.index((u, v), ind + 1)
+            edge_colors[ind] = route_color
+        elif (v, u) in edges:
+            ind = edges.index((v, u))
+            while edge_colors[ind] == route_color:
+                ind = edges.index((v, u), ind + 1)
+            edge_colors[ind] = route_color
+    except:
+        pass
 
 
 def _route_video_thread(
@@ -103,7 +106,7 @@ def _route_video_thread(
 
     edges = list(graph.edges())
 
-    edge_colors = ["w" for _ in route]
+    edge_colors = ["w" for _ in range(graph.number_of_edges())]
     for u, v, _ in route[:begin]:
         _update_edge_colors(edge_colors, u, v, edges, route_color)
 
@@ -132,6 +135,7 @@ def route_video(
     route_color: str,
     filename: str,
     nb_threads: int,
+    img_per_second: int,
 ) -> None:
     """
     Generate a mp4 video from the @route and store it in @filename.mp4
@@ -190,11 +194,12 @@ def route_video(
 
                 beg += nb_per_threads
 
+
             for i in range(nb_threads):
                 results[i].get()
                 progress.stop_task(tasks[i])
 
         log.info("Calling ffmpeg on generated images")
         os.system(
-            f"ffmpeg -r 16 -i {tmp_dir}/%01d.png -vcodec mpeg4 -y {output_file}"
+            f"ffmpeg -r {img_per_second} -i {tmp_dir}/%01d.png -vcodec mpeg4 -y {output_file}"
         )

@@ -30,7 +30,7 @@ def create_snow(snow_data: list, related_district: str) -> Snow:
 
     snow = Snow(snow_data, related_district, max_ind)
 
-    snows[max_ind + 1] = snow
+    snows[max_ind] = snow
 
     lib.save_data("snow.pkl", snows)
 

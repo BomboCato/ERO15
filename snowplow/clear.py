@@ -7,7 +7,7 @@ from typing import Tuple
 from data.districts import District, load_district
 from data.route import Route
 from data.snow import Snow, load_snow
-from data.display import route_image
+from data.display import route_video, route_image
 from rich.progress import (
     Progress,
     SpinnerColumn,
@@ -23,6 +23,8 @@ import snowplow.lib as lib
 import cli.log as log
 import math
 import drone.analyze as analyze
+
+console = Console()
 
 def transferAttributes(G, G2):
     """
@@ -44,7 +46,9 @@ def clear(id):
     dist_all = load_district("Montreal")
     G_all = dist_all.graph
     G_di = load_district(snow.related_district).graph
-    list_snow = [(u, v, k) for u, v, k, data in snow.data]
+    
+    console.print(snow.data)
+    list_snow = [(u, v, k) for u, v, k, data in snow.data if data >= 2.5 and data <= 15]
     snow_graph = nx.edge_subgraph(G_di, list_snow)
 
     ox.plot_graph(snow_graph)
@@ -72,4 +76,5 @@ def clear(id):
             real_circuit.append((u, v, k))
 
     route = Route(real_circuit, snow.related_district)
+    route_video(District("Verdun, Montreal", G_di), route, "red", "test", 16, 64)
     route_image(District("Verdun, Montreal", G_di), route, "red", "test")
