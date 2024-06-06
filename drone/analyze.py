@@ -2,7 +2,7 @@
 # drone/analyze.py
 #
 
-from threading import Thread
+from multiprocessing.pool import AsyncResult, Pool
 from typing import Tuple
 from data.districts import District, load_district
 from data.route import Route
@@ -11,6 +11,7 @@ from drone.snow import gen_random_snow
 from rich.progress import (
     Progress,
     SpinnerColumn,
+    TaskID,
     TextColumn,
     TimeElapsedColumn,
 )
@@ -86,29 +87,15 @@ def retrieveDistrictsGraph() -> list[District]:
 # PARCOURS DRONE SUR G (AJOUTER UN ATTRIBUT POUR DIRE SI IL FAUT DENEIGER)
 def drone(
     G,
-    progress: Progress,
-    list_circuit: list,
-    index: int,
-    list_eul: list,
     src=None,
-):
+) -> tuple:
     """
     Returns a tuple (G, circuit) where G is the graph with attribute 'need_clear' added and circuit is path taken by the drone
     """
 
-    task = progress.add_task(f"Connecting graph {index}...", total=None)
     G_conn = lib.connect(G, False)
-    progress.remove_task(task)
-    log.info(
-        f"Connect: Added {G_conn.number_of_edges() - G.number_of_edges()} edge(s)"
-    )
 
-    task = progress.add_task(f"Eulerizing graph {index}...", total=None)
     G_eul = lib.eulerize(G_conn, False)
-    progress.remove_task(task)
-    log.info(
-        f"Eulerize: Added {G_eul.number_of_edges() - G_conn.number_of_edges()} edge(s)"
-    )
 
     for u, v, k, data in G_eul.edges(keys=True, data=True):
         snow = data.get(
@@ -120,8 +107,7 @@ def drone(
             G_eul[u][v][k]["need_clear"] = False
     circuit = nx.eulerian_circuit(G_eul, source=src, keys=True)
 
-    list_circuit[index] = list(circuit)
-    list_eul[index] = G_eul
+    return list(circuit), G_eul
 
 
 def analyze_snow_montreal(
@@ -136,23 +122,33 @@ def analyze_snow_montreal(
 
     total_distance = 0
     list_of_nodes = []
-    list_circuit = [None] * 19
-    list_eul = [None] * 19
+    list_circuit: list[tuple] = []
+    list_eul: list[nx.MultiGraph] = []
     res_circuit = []
 
-    threads: list[Thread] = []
+    results: list[AsyncResult] = []
+    tasks: list[TaskID] = []
 
-    for i in range(19):
-        threads.append(
-            Thread(
-                target=drone,
-                args=(l[i], progress, list_circuit, i, list_eul),
+    with Pool(19) as pool:
+        for i in range(19):
+            tasks.append(progress.add_task(f"Eulerize and Connect graph {i}...", total=None))
+            results.append(
+                pool.apply_async(
+                    drone,
+                    (l[i],),
+                )
             )
-        )
-        threads[-1].start()
 
-    for t in threads:
-        t.join()
+        for i in range(len(results)):
+            circuit, g_eul = results[i].get()
+            list_circuit.append(circuit)
+            list_eul.append(g_eul)
+            progress.stop_task(tasks[i])
+        
+    for i in range(19):
+        log.info(
+            f"Eulerize and Connect: Added {list_eul[i].number_of_edges() - l[i].number_of_edges()} edge(s)"
+        )
 
     for i in range(19):
         # if i in [1, 5, 10, 12, 16]:
@@ -224,9 +220,9 @@ def analyze_snow_montreal(
         list_of_nodes.remove(current_node)
         current_node = closest_node
     snow_list = [
-        (u, v, snow)
-        for u, v, snow in G_all.graph.edges.data("snow", -1)
-        if snow != -1
+        (u, v, k, data["snow"])
+        for u, v, k, data in G_all.graph.edges(data=True, keys=True)
+        if "snow" in data
     ]
     snow = Snow(snow_list, "Montreal")
     return (
@@ -277,7 +273,7 @@ def analyze_snow(dist_name: str) -> Tuple[District, Route, Snow, float]:
         task_id = progress.add_task(
             description="Getting eulerian circuit...", total=None
         )
-        circuit = list(nx.eulerian_circuit(snow_eul))
+        circuit = list(nx.eulerian_circuit(snow_eul, keys=True))
         progress.remove_task(task_id)
 
         distance = 0
@@ -290,11 +286,14 @@ def analyze_snow(dist_name: str) -> Tuple[District, Route, Snow, float]:
                 distance += geodesic((x1, y1), (x2, y2)).meters
             else:
                 distance += length
+
         snow_list = [
-            (u, v, snow)
-            for u, v, snow in snow_dist_un.edges.data("snow", -1)
-            if snow != -1
+            (u, v, k, data["snow"])
+            for u, v, k, data in snow_dist_un.edges(data=True, keys=True)
+            if "snow" in data
         ]
+
+        console.print(snow_list)
 
         return (
             District(f"{dist_name}_snow", snow_eul),

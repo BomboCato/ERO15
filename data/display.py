@@ -104,12 +104,12 @@ def _route_video_thread(
     edges = list(graph.edges())
 
     edge_colors = ["w" for _ in route]
-    for u, v in route[:begin]:
+    for u, v, _ in route[:begin]:
         _update_edge_colors(edge_colors, u, v, edges, route_color)
 
     img_nb = begin
 
-    for u, v in route[begin : begin + nb_per_threads]:
+    for u, v, _ in route[begin : begin + nb_per_threads]:
         _update_edge_colors(edge_colors, u, v, edges, route_color)
 
         ox.plot_graph(
