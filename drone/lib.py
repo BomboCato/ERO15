@@ -2,7 +2,7 @@
 # drone/lib.py
 #
 
-
+import osmnx as ox
 import networkx as nx
 import cli.log as log
 
@@ -69,6 +69,7 @@ def to_undirected(G):
     G_undi = nx.MultiGraph()
     for u, v, k, data in G.edges(keys=True, data=True):
         if not G_undi.has_edge(u, v, k) and not G_undi.has_edge(v, u, k):
-            for name, value in data.items():
-                G_undi.add_edge(u, v, key=k, name=value)
+            G_undi.add_edge(u, v, key=k, **data)
+
+    G_undi.graph["crs"] = G.graph["crs"]
     return G_undi
