@@ -26,6 +26,7 @@ import drone.analyze as analyze
 
 console = Console()
 
+
 def transferAttributes(G, G2):
     """
     It transfers the attributes of the edges in G2 to G.
@@ -36,19 +37,23 @@ def transferAttributes(G, G2):
         if G.has_edge(v, u, k):
             G[v][u][k].update(data)
 
+
 def clear(id):
-    """
-    """
+    """ """
     snow = load_snow(id)
     if snow == None:
         return
-    
+
     dist_all = load_district("Montreal")
     G_all = dist_all.graph
     G_di = load_district(snow.related_district).graph
-    
+
     console.print(snow.data)
-    list_snow = [(u, v, k) for u, v, k, data in snow.data if data >= 2.5 and data <= 15]
+    list_snow = [
+        (u, v, k)
+        for u, v, k, data in snow.data
+        if data >= 2.5 and data <= 15
+    ]
     snow_graph = nx.edge_subgraph(G_di, list_snow)
 
     ox.plot_graph(snow_graph)
@@ -76,5 +81,7 @@ def clear(id):
             real_circuit.append((u, v, k))
 
     route = Route(real_circuit, snow.related_district)
-    route_video(District("Verdun, Montreal", G_di), route, "red", "test", 16, 64)
+    route_video(
+        District("Verdun, Montreal", G_di), route, "red", "test", 16, 64
+    )
     route_image(District("Verdun, Montreal", G_di), route, "red", "test")

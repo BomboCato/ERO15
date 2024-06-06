@@ -78,7 +78,12 @@ def route_image(
 
 
 def _update_edge_colors(
-    edge_colors: list[str], u: int, v: int, k: int, edges: list, route_color: str
+    edge_colors: list[str],
+    u: int,
+    v: int,
+    k: int,
+    edges: list,
+    route_color: str,
 ) -> None:
     try:
         if (u, v, k) in edges:
@@ -187,7 +192,6 @@ def route_video(
                 )
 
                 beg += nb_per_threads
-
 
             for i in range(nb_threads):
                 results[i].get()

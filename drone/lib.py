@@ -62,6 +62,7 @@ def eulerize(graph: nx.MultiGraph, mark) -> nx.MultiGraph:
 
     return res_graph
 
+
 def to_undirected(G):
     """
     Converts G digraph into undirected graph

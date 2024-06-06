@@ -5,6 +5,7 @@
 import networkx as nx
 import cli.log as log
 
+
 def strong_connect(graph: nx.MultiDiGraph, mark) -> nx.MultiDiGraph:
     """
     Return a strongly connected graph by adding arcs

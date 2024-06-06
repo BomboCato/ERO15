@@ -131,7 +131,11 @@ def analyze_snow_montreal(
 
     with Pool(19) as pool:
         for i in range(19):
-            tasks.append(progress.add_task(f"Eulerize and Connect graph {i}...", total=None))
+            tasks.append(
+                progress.add_task(
+                    f"Eulerize and Connect graph {i}...", total=None
+                )
+            )
             results.append(
                 pool.apply_async(
                     drone,
@@ -144,7 +148,7 @@ def analyze_snow_montreal(
             list_circuit.append(circuit)
             list_eul.append(g_eul)
             progress.stop_task(tasks[i])
-        
+
     for i in range(19):
         log.info(
             f"Eulerize and Connect: Added {list_eul[i].number_of_edges() - l[i].number_of_edges()} edge(s)"
