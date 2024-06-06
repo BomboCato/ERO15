@@ -4,8 +4,8 @@
 
 import networkx as nx
 import osmnx as ox
-import data.lib as lib
-import cli.log as log
+import lib.lib as lib
+import lib.log as log
 
 
 class District:

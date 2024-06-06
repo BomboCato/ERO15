@@ -2,7 +2,7 @@
 # data/snow.py
 #
 
-import data.lib as lib
+import lib.lib as lib
 
 
 class Snow:

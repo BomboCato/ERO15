@@ -3,8 +3,8 @@
 #
 
 from multiprocessing.pool import AsyncResult
-from data.districts import District
-from data.route import Route
+from lib.districts import District
+from lib.route import Route
 from rich.progress import (
     Progress,
     SpinnerColumn,
@@ -15,7 +15,7 @@ from rich.progress import (
 from multiprocessing import Pool
 
 import osmnx as ox
-import cli.log as log
+import lib.log as log
 import tempfile
 import os
 import matplotlib.pyplot as plt

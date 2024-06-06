@@ -4,9 +4,9 @@
 
 from multiprocessing.pool import AsyncResult, Pool
 from typing import Tuple
-from data.districts import District, load_district
-from data.route import Route
-from data.snow import Snow
+from lib.districts import District, load_district
+from lib.route import Route
+from lib.snow import Snow
 from drone.snow import gen_random_snow
 from rich.progress import (
     Progress,
@@ -20,7 +20,7 @@ from geopy.distance import geodesic
 
 import networkx as nx
 import drone.lib as lib
-import cli.log as log
+import lib.log as log
 import math
 
 console = Console()

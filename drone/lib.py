@@ -3,7 +3,7 @@
 #
 
 import networkx as nx
-import cli.log as log
+import lib.log as log
 
 
 def connect(graph: nx.MultiGraph, mark) -> nx.MultiGraph:

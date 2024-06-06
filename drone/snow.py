@@ -4,7 +4,7 @@
 
 import random
 
-from data.districts import District
+from lib.districts import District
 
 
 def gen_random_snow(district: District) -> District:
