@@ -61,3 +61,14 @@ def eulerize(graph: nx.MultiGraph, mark) -> nx.MultiGraph:
         log.warn("Could not return eulerian graph")
 
     return res_graph
+
+def to_undirected(G):
+    """
+    Converts G digraph into undirected graph
+    """
+    G_undi = nx.MultiGraph()
+    for u, v, k, data in G.edges(keys=True, data=True):
+        if not G_undi.has_edge(u, v, k) and not G_undi.has_edge(v, u, k):
+            for name, value in data.items():
+                G_undi.add_edge(u, v, key=k, name=value)
+    return G_undi
