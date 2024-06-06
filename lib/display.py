@@ -90,6 +90,28 @@ def save_image_district(district: District, filename: str) -> None:
     )
 
 
+def display_image_route(district: District, route: Route, route_color: str) -> None:
+    """
+    Display the @district and the @route on top of it
+    @route will have @route_color as a color
+    @route_color should not be white
+    """
+
+    if route_color == "w" or route_color == "white":
+        log.warn("Using white as a route color makes the route invisible")
+
+    edge_colors = [
+        (
+            route_color
+            if (u, v, k) in route.route or (v, u, k) in route.route
+            else "w"
+        )
+        for u, v, k in district.graph.edges(keys=True)
+    ]
+
+    ox.plot_graph(district.graph, node_size=1, edge_color=edge_colors)
+
+
 def save_image_route(
     district: District, route: Route, route_color: str, filename: str
 ) -> None:
@@ -103,7 +125,6 @@ def save_image_route(
     if route_color == "w" or route_color == "white":
         log.warn("Using white as a route color makes the route invisible")
 
-    output_file = filename + ".png"
     edge_colors = [
         (
             route_color
@@ -116,7 +137,7 @@ def save_image_route(
     ox.plot_graph(
         district.graph,
         save=True,
-        filepath=output_file,
+        filepath=filename,
         node_size=1,
         show=False,
         edge_color=edge_colors,
@@ -199,8 +220,6 @@ def save_video_route(
         )
         nb_threads = len(route.route)
 
-    output_file = filename + ".mp4"
-
     with tempfile.TemporaryDirectory() as tmp_dir:
 
         results: list[AsyncResult] = []
@@ -244,5 +263,5 @@ def save_video_route(
 
         log.info("Calling ffmpeg on generated images")
         os.system(
-            f"ffmpeg -r {img_per_second} -i {tmp_dir}/%01d.png -vcodec mpeg4 -y {output_file}"
+            f"ffmpeg -r {img_per_second} -i {tmp_dir}/%01d.png -vcodec mpeg4 -y {filename}"
         )

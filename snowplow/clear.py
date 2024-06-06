@@ -3,7 +3,7 @@
 #
 
 from lib.districts import load_district
-from lib.route import Route
+from lib.route import Route, RouteType
 from lib.snow import load_snow
 from rich.console import Console
 
@@ -42,10 +42,10 @@ def clear_path(id: int) -> Route | None:
     ox.plot_graph(dist_snow.graph)
 
 
-def clear_eul(id: int) -> Route | None:
+def clear_eul(id: int) -> list[Route] | None:
     """ """
     snow = load_snow(id)
-    if snow == None:
+    if not snow:
         return None
 
     dist_all = load_district("Montreal")
@@ -55,7 +55,7 @@ def clear_eul(id: int) -> Route | None:
     list_snow = [
         (u, v, k)
         for u, v, k, data in snow.data
-        if data >= 2.5 and data <= 15
+        if 2.5 <= data <= 15
     ]
     snow_graph = nx.edge_subgraph(G_di, list_snow)
 
@@ -82,6 +82,6 @@ def clear_eul(id: int) -> Route | None:
         else:
             real_circuit.append((u, v, k))
 
-    route = Route(real_circuit, snow.related_district)
+    route = Route(real_circuit, snow.related_district, RouteType.SNOWPLOW)
 
-    return route
+    return [route]

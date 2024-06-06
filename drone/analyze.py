@@ -5,7 +5,7 @@
 from multiprocessing.pool import AsyncResult, Pool
 from typing import Tuple
 from lib.districts import District, load_district
-from lib.route import Route
+from lib.route import Route, RouteType
 from lib.snow import Snow
 from drone.snow import gen_random_snow
 from rich.progress import (
@@ -230,7 +230,7 @@ def analyze_snow_montreal(
     ]
     return (
         District("Montreal", G_all.graph),
-        Route(res_circuit, "Montreal"),
+        Route(res_circuit, "Montreal", RouteType.DRONE),
         Snow(snow_list, "Montreal"),
         total_distance,
     )
@@ -298,7 +298,7 @@ def analyze_snow(dist_name: str) -> Tuple[District, Route, Snow, float]:
 
         return (
             District(f"{dist_name}_snow", snow_eul),
-            Route(circuit, f"{dist_name}"),
+            Route(circuit, f"{dist_name}", RouteType.DRONE),
             Snow(snow_list, f"{dist_name}"),
             distance,
         )

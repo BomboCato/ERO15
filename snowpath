@@ -14,9 +14,10 @@ from drone.analyze import analyze_snow
 from lib.display import (
     display_snow,
     save_snow,
-    save_image_district,
+    save_image_district, save_image_route, save_video_route, display_image_route,
 )
 from lib.districts import load_district
+from lib.route import load_route, create_route, RouteType
 from lib.snow import create_snow, load_snow
 from snowplow.clear import clear_eul
 
@@ -65,7 +66,7 @@ def drone(
     Launch the drone and analyze the district/city.
     """
 
-    dist_snow, route, snow_data, distance = analyze_snow(district_name)
+    dist_snow, route_data, snow_data, distance = analyze_snow(district_name)
     table = Table(title="Results")
 
     table.add_column("District")
@@ -87,6 +88,10 @@ def drone(
     snow_data = create_snow(snow_data.data, snow_data.related_district)
 
     log.info(f"Generated snow data for '{district_name}' with id {snow_data.id}")
+
+    route_data = create_route(route_data.route, route_data.related_district, RouteType.DRONE)
+
+    log.info(f"Generated route data for '{district_name}' with id {route_data.id}")
 
 
 @display_app.command(help="Display/save the specified district.", no_args_is_help=True)
@@ -157,6 +162,55 @@ def snow(
         display_snow(snow_data, snow_color, road_color)
 
 
+@display_app.command(help="Display/save route data.", no_args_is_help=True)
+def route(
+        route_id: Annotated[int, typer.Argument(help="The route id to display/save.")],
+        route_color: Annotated[str, typer.Option(help="The route color.")] = "red",
+        image: Annotated[
+            str, typer.Option(help="The output file to save the route image.")
+        ] = None,
+        video: Annotated[
+            str, typer.Option(help="The output file to save the route video.")
+        ] = None,
+        nb_threads: Annotated[
+            int, typer.Option(help="The number of threads to use for the video.")
+        ] = 1,
+        img_per_sec: Annotated[
+            int, typer.Option(help="The number of images per second for the video.")
+        ] = 16,
+) -> None:
+    """
+    Display/save route data.
+    """
+
+    route_data = load_route(route_id)
+    district_data = load_district(route_data.related_district)
+
+    if not route_data:
+        log.error(
+            f"Route id {route_id} does not exists. You must specify an known route id."
+        )
+        raise typer.Exit()
+
+    if image:
+        log.info(
+            f"CMD: save route from '{route_data.related_district}' with id '{route_data.id}' in '{image}'"
+        )
+        save_image_route(district_data, route_data, route_color, image)
+
+    if video:
+        log.info(
+            f"CMD: save route from '{route_data.related_district}' with id '{route_data.id}' in '{video}'"
+        )
+        save_video_route(district_data, route_data, route_color, video, nb_threads, img_per_sec)
+
+    if not image and not video:
+        log.info(
+            f"CMD: display route from '{route_data.related_district}' with id '{route_data.id}'"
+        )
+        display_image_route(district_data, route_data, route_color)
+
+
 @app.command(help="Snowplow related computing.", no_args_is_help=True)
 def snowplow(
         snow_id: Annotated[
@@ -169,7 +223,12 @@ def snowplow(
     """
     Start the snowplows.
     """
-    clear_eul(snow_id)
+    routes = clear_eul(snow_id)
+
+    for route_data in routes:
+        new_route = create_route(route_data.route, route_data.related_district, RouteType.SNOWPLOW)
+
+        log.info(f"Snowplow route {new_route.id} created for {new_route.related_district}")
 
 
 if __name__ == "__main__":
