@@ -6,7 +6,8 @@ from threading import Thread
 from typing import Tuple
 from data.districts import District, load_district
 from data.route import Route
-from data.snow import Snow
+from data.snow import Snow, load_snow
+from data.display import route_image
 from rich.progress import (
     Progress,
     SpinnerColumn,
@@ -33,27 +34,42 @@ def transferAttributes(G, G2):
         if G.has_edge(v, u, k):
             G[v][u][k].update(data)
 
-def clear(dist_name):
+def clear(id):
     """
     """
-    DiG = load_district(dist_name).graph
-    (dist, _, snow, _) = analyze.analyze_snow(dist_name)
-    transferAttributes(DiG, dist.graph)
+    snow = load_snow(id)
+    if snow == None:
+        return
+    
+    dist_all = load_district("Montreal")
+    G_all = dist_all.graph
+    G_di = load_district(snow.related_district).graph
+    list_snow = [(u, v, k) for u, v, k, data in snow.data]
+    snow_graph = nx.edge_subgraph(G_di, list_snow)
 
-    snow_graph = DiG.copy()
-    for u, v, k, data in DiG.edges(keys=True, data=True):
-        snow = DiG[u][v][k]["snow"]
-        if snow < 2.5 or snow > 15:
-            snow_graph.remove_edge(u, v)
-
-    ox.plot_graph(DiG)
     ox.plot_graph(snow_graph)
     G_conn = lib.strong_connect(snow_graph, "virtual")
-    ox.plot_graph(G_conn)
     G_eul = lib.diEulerize(G_conn, "virtual")
-    ox.plot_graph(G_eul)
-    circuit = list(nx.eulerian_circuit(G_eul, source=G_eul.edges[0, 0, 0], keys=True))
-    print(circuit)
-    # for u, v, k in circuit:
-    #     if "virtual" in :
-    #         path = nx.shortest_path(G_eul, circuit[u][v])
+
+    circuit = list(nx.eulerian_circuit(G_eul, keys=True))
+    real_circuit = []
+
+    for u, v, k in circuit:
+        if "mark" in G_eul[u][v][k]:
+            path = nx.shortest_path(G_all, u, v, weight="length")
+            edge_path = []
+            for i in range(len(path) - 1):
+                min_len = float("inf")
+                k = float("inf")
+                edges = G_all[path[i]][path[i + 1]]
+                for value, edge in edges.items():
+                    if edge["length"] < min_len:
+                        min_len = edge["length"]
+                        k = value
+                edge_path.append((path[i], path[i + 1], k))
+            real_circuit.extend(edge_path)
+        else:
+            real_circuit.append((u, v, k))
+
+    route = Route(real_circuit, snow.related_district)
+    route_image(District("Verdun, Montreal", G_di), route, "red", "test")

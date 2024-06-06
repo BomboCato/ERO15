@@ -57,10 +57,10 @@ def route_image(
     edge_colors = [
         (
             route_color
-            if (u, v) in route.route or (v, u) in route.route
+            if (u, v, k) in route.route or (v, u, k) in route.route
             else "w"
         )
-        for u, v in district.graph.edges()
+        for u, v, k in district.graph.edges(keys=True)
     ]
 
     log.info(

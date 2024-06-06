@@ -29,13 +29,13 @@ def strong_connect(graph: nx.MultiDiGraph, mark) -> nx.MultiDiGraph:
         sink1 = next(iter(cond_graph.nodes[sinks[i]]["members"]))
         sink2 = next(iter(cond_graph.nodes[sinks[i + 1]]["members"]))
 
-        res_graph.add_edge(sink1, sink2, mark=mark)
+        res_graph.add_edge(sink2, sink1, mark=mark)
 
     if len(sources) != 0 and len(sinks) != 0:
         src = next(iter(cond_graph.nodes[sources[0]]["members"]))
         sink = next(iter(cond_graph.nodes[sinks[0]]["members"]))
 
-        res_graph.add_edge(src, sink, mark=mark)
+        res_graph.add_edge(sink, src, mark=mark)
 
     if not nx.is_strongly_connected(res_graph):
         log.warn("Could not return connected graph")
@@ -79,7 +79,7 @@ def diEulerize(graph: nx.MultiDiGraph, mark) -> nx.MultiDiGraph:
     while surplus and deficit:
         u = surplus.pop()
         v = deficit.pop()
-        res_graph.add_edge(u, v, mark=mark)
+        res_graph.add_edge(v, u, mark=mark)
 
     if not nx.is_eulerian(res_graph):
         log.warn("Could not return eulerian graph")
