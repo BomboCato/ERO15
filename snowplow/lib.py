@@ -19,13 +19,23 @@ def strong_connect(graph: nx.MultiDiGraph, mark) -> nx.MultiDiGraph:
         node for node, degree in cond_graph.in_degree if degree == 0
     ]
 
-    for source in sources:
-        for sink in sinks:
-            if sink != source:
-                src = next(iter(cond_graph.nodes[source]["members"]))
-                sik = next(iter(cond_graph.nodes[sink]["members"]))
+    for i in range(len(sources) - 1):
+        src1 = next(iter(cond_graph.nodes[sources[i]]["members"]))
+        src2 = next(iter(cond_graph.nodes[sources[i + 1]]["members"]))
 
-                res_graph.add_edge(sik, src, mark=mark)
+        res_graph.add_edge(src1, src2, mark=mark)
+
+    for i in range(len(sinks) - 1):
+        sink1 = next(iter(cond_graph.nodes[sinks[i]]["members"]))
+        sink2 = next(iter(cond_graph.nodes[sinks[i + 1]]["members"]))
+
+        res_graph.add_edge(sink1, sink2, mark=mark)
+
+    if len(sources) != 0 and len(sinks) != 0:
+        src = next(iter(cond_graph.nodes[sources[0]]["members"]))
+        sink = next(iter(cond_graph.nodes[sinks[0]]["members"]))
+
+        res_graph.add_edge(src, sink, mark=mark)
 
     if not nx.is_strongly_connected(res_graph):
         log.warn("Could not return connected graph")
