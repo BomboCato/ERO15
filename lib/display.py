@@ -1,5 +1,5 @@
 #
-# data/display.py
+# lib/display.py
 #
 
 from multiprocessing.pool import AsyncResult

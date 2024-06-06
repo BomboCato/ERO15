@@ -25,15 +25,15 @@ err_console = Console(stderr=True)
 
 def delete_data_callback(value: bool) -> None:
     if value:
-        if os.path.exists("data/districts.pkl"):
-            log.info("Deleting data/ditricts.pkl")
-            os.remove("data/districts.pkl")
-        if os.path.exists("data/routes.pkl"):
-            log.info("Deleting data/routes.pkl")
-            os.remove("data/routes.pkl")
-        if os.path.exists("data/snow.pkl"):
-            log.info("Deleting data/snow.pkl")
-            os.remove("data/snow.pkl")
+        if os.path.exists("lib/districts.pkl"):
+            log.info("Deleting lib/ditricts.pkl")
+            os.remove("lib/districts.pkl")
+        if os.path.exists("lib/routes.pkl"):
+            log.info("Deleting lib/routes.pkl")
+            os.remove("lib/routes.pkl")
+        if os.path.exists("lib/snow.pkl"):
+            log.info("Deleting lib/snow.pkl")
+            os.remove("lib/snow.pkl")
         raise typer.Exit()
 
 

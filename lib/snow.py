@@ -1,5 +1,5 @@
 #
-# data/snow.py
+# lib/snow.py
 #
 
 import lib.lib as lib

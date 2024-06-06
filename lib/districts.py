@@ -1,5 +1,5 @@
 #
-# data/districts.py
+# lib/districts.py
 #
 
 import networkx as nx
