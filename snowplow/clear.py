@@ -2,10 +2,10 @@
 # snowplow/clear.py
 #
 
-from data.districts import District, load_district
-from data.route import Route
-from data.snow import load_snow
-from data.display import route_video, route_image
+from lib.districts import District, load_district
+from lib.route import Route
+from lib.snow import load_snow
+from lib.display import route_video, route_image
 from rich.console import Console
 
 import osmnx as ox
