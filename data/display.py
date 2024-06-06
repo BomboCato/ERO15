@@ -78,19 +78,13 @@ def route_image(
 
 
 def _update_edge_colors(
-    edge_colors: list[str], u: int, v: int, edges: list, route_color: str
+    edge_colors: list[str], u: int, v: int, k: int, edges: list, route_color: str
 ) -> None:
     try:
-        if (u, v) in edges:
-            ind = edges.index((u, v))
-            while edge_colors[ind] == route_color:
-                ind = edges.index((u, v), ind + 1)
-            edge_colors[ind] = route_color
-        elif (v, u) in edges:
-            ind = edges.index((v, u))
-            while edge_colors[ind] == route_color:
-                ind = edges.index((v, u), ind + 1)
-            edge_colors[ind] = route_color
+        if (u, v, k) in edges:
+            edge_colors[edges.index((u, v, k))] = route_color
+        elif (v, u, k) in edges:
+            edge_colors[edges.index((v, u, k))] = route_color
     except:
         pass
 
@@ -104,16 +98,16 @@ def _route_video_thread(
     nb_per_threads: int,
 ) -> None:
 
-    edges = list(graph.edges())
+    edges = list(graph.edges(keys=True))
 
-    edge_colors = ["w" for _ in range(graph.number_of_edges())]
-    for u, v, _ in route[:begin]:
-        _update_edge_colors(edge_colors, u, v, edges, route_color)
+    edge_colors = ["w" for _ in edges]
+    for u, v, k in route[:begin]:
+        _update_edge_colors(edge_colors, u, v, k, edges, route_color)
 
     img_nb = begin
 
-    for u, v, _ in route[begin : begin + nb_per_threads]:
-        _update_edge_colors(edge_colors, u, v, edges, route_color)
+    for u, v, k in route[begin : begin + nb_per_threads]:
+        _update_edge_colors(edge_colors, u, v, k, edges, route_color)
 
         ox.plot_graph(
             graph,

@@ -26,7 +26,7 @@ def create_snow(snow_data: list, related_district: str) -> Snow:
     """
     snows: dict[int, Snow] = lib.get_data("snow.pkl")
     indexes = list(snows.keys())
-    max_ind = max(indexes) if len(indexes) != 0 else 0
+    max_ind = max(indexes) + 1 if len(indexes) != 0 else 0
 
     snow = Snow(snow_data, related_district, max_ind)
 
