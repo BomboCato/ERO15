@@ -224,11 +224,10 @@ def analyze_snow_montreal(
         for u, v, k, data in G_all.graph.edges(data=True, keys=True)
         if "snow" in data
     ]
-    snow = Snow(snow_list, "Montreal")
     return (
         District("Montreal", G_all.graph),
         Route(res_circuit, "Montreal"),
-        snow,
+        Snow(snow_list, "Montreal"),
         total_distance,
     )
 
@@ -293,11 +292,9 @@ def analyze_snow(dist_name: str) -> Tuple[District, Route, Snow, float]:
             if "snow" in data
         ]
 
-        console.print(snow_list)
-
         return (
             District(f"{dist_name}_snow", snow_eul),
-            Route(circuit, f"{dist_name}_snow"),
-            Snow(snow_list, f"{dist_name}_snow"),
+            Route(circuit, f"{dist_name}"),
+            Snow(snow_list, f"{dist_name}"),
             distance,
         )
