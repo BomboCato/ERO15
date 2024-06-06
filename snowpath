@@ -102,7 +102,7 @@ def drone(
     log.info(f"Generated snow data for {district} with id {snow.id}")
 
 
-@app.command()
+@app.command(help="Display districts, routes and snow data.")
 def display(
     name: Annotated[
         str, typer.Argument(help="The district name to display.")
@@ -137,7 +137,7 @@ def display(
         ox.plot_graph(dist.graph)
 
 
-@app.command()
+@app.command(help="Snowplow related computing.")
 def snowplow(
     id: Annotated[
         int,
