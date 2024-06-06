@@ -67,9 +67,10 @@ def to_undirected(G):
     Converts G digraph into undirected graph
     """
     G_undi = nx.MultiGraph()
+    G_undi.graph["crs"] = G.graph["crs"]
+    for u, data in G.nodes(data=True):
+        G_undi.add_node(u, **data)
     for u, v, k, data in G.edges(keys=True, data=True):
         if not G_undi.has_edge(u, v, k) and not G_undi.has_edge(v, u, k):
             G_undi.add_edge(u, v, key=k, **data)
-
-    G_undi.graph["crs"] = G.graph["crs"]
     return G_undi
