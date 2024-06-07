@@ -36,11 +36,15 @@ def display_snow(snow: Snow, snow_color: str, road_color: str) -> None:
 
     district, edge_colors = _main_snow(snow, snow_color, road_color)
 
+    snow_amount = edge_colors.count(snow_color)
+
+    log.info(f"Snow amount for district '{district.name}': {snow_amount} edges")
+
     ox.plot_graph(district.graph, node_size=1, edge_color=edge_colors)
 
 
 def save_snow(
-    snow: Snow, snow_color: str, road_color: str, filename: str
+        snow: Snow, snow_color: str, road_color: str, filename: str
 ) -> None:
     """
     Save the @snow from the related district in @filename.
@@ -60,9 +64,8 @@ def save_snow(
 
 
 def _main_snow(
-    snow: Snow, snow_color: str, road_color: str
+        snow: Snow, snow_color: str, road_color: str
 ) -> tuple[District, list[str]]:
-
     if snow_color == road_color:
         log.warn("snow-color and road-color should be different.")
 
@@ -90,7 +93,7 @@ def save_image_district(district: District, filename: str) -> None:
     )
 
 
-def display_image_route(district: District, route: Route, route_color: str) -> None:
+def display_image_route(district: District, route: Route, route_color: str, road_color: str) -> None:
     """
     Display the @district and the @route on top of it
     @route will have @route_color as a color
@@ -104,16 +107,20 @@ def display_image_route(district: District, route: Route, route_color: str) -> N
         (
             route_color
             if (u, v, k) in route.route or (v, u, k) in route.route
-            else "w"
+            else road_color
         )
         for u, v, k in district.graph.edges(keys=True)
     ]
+
+    amount = edge_colors.count(route_color)
+
+    log.info(f"Route amount for district '{district.name}': {amount} edges")
 
     ox.plot_graph(district.graph, node_size=1, edge_color=edge_colors)
 
 
 def save_image_route(
-    district: District, route: Route, route_color: str, filename: str
+        district: District, route: Route, route_color: str, road_color: str, filename: str
 ) -> None:
     """
     Save the @district and the @route on top of it
@@ -129,7 +136,7 @@ def save_image_route(
         (
             route_color
             if (u, v, k) in route.route or (v, u, k) in route.route
-            else "w"
+            else road_color
         )
         for u, v, k in district.graph.edges(keys=True)
     ]
@@ -145,39 +152,42 @@ def save_image_route(
 
 
 def _update_edge_colors(
-    edge_colors: list[str],
-    u: int,
-    v: int,
-    k: int,
-    edges: list,
-    route_color: str,
+        edge_colors: list[str],
+        u: int,
+        v: int,
+        k: int,
+        edges: list,
+        route_color: str,
 ) -> None:
     try:
         if (u, v, k) in edges:
             edge_colors[edges.index((u, v, k))] = route_color
         elif (v, u, k) in edges:
             edge_colors[edges.index((v, u, k))] = route_color
+        else:
+            log.warn(f"Edge {u} -> {v} or {v} -> {v} with key {k} will not be colored")
     except:
         pass
 
 
 def _route_video_thread(
-    graph: nx.MultiGraph,
-    route: list,
-    route_color: str,
-    tmp_dir: str,
-    begin: int,
-    nb_per_threads: int,
+        graph: nx.MultiGraph,
+        route: list,
+        route_color: str,
+        road_color: str,
+        tmp_dir: str,
+        begin: int,
+        nb_per_threads: int,
 ) -> None:
     edges = list(graph.edges(keys=True))
 
-    edge_colors = ["w" for _ in edges]
+    edge_colors = [road_color for _ in edges]
     for u, v, k in route[:begin]:
         _update_edge_colors(edge_colors, u, v, k, edges, route_color)
 
     img_nb = begin
 
-    for u, v, k in route[begin : begin + nb_per_threads]:
+    for u, v, k in route[begin: begin + nb_per_threads]:
         _update_edge_colors(edge_colors, u, v, k, edges, route_color)
 
         ox.plot_graph(
@@ -195,16 +205,17 @@ def _route_video_thread(
 
 
 def save_video_route(
-    district: District,
-    route: Route,
-    route_color: str,
-    filename: str,
-    nb_threads: int,
-    img_per_second: int,
+        district: District,
+        route: Route,
+        route_color: str,
+        road_color: str,
+        filename: str,
+        nb_threads: int,
+        img_per_second: int,
 ) -> None:
     """
     Generate a mp4 video from the @route and store it in @filename.mp4
-    Each frame will consists of the coloration of a specific edge
+    Each frame will consist of the coloration of a specific edge
     from @route in @district added to the previous colorations.
     Each edge will be visited in the @route.route order.
     """
@@ -229,16 +240,16 @@ def save_video_route(
         nb_per_threads = (l // nb_threads) + (l % nb_threads != 0)
 
         with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            TimeElapsedColumn(),
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                TimeElapsedColumn(),
         ) as progress, Pool(nb_threads) as pool:
             for _ in range(nb_threads):
                 tasks.append(
                     progress.add_task(
                         f"Generating images {beg}-{beg + nb_per_threads}",
                         total=min(beg + nb_per_threads, len(route.route))
-                        - beg,
+                              - beg,
                     )
                 )
                 results.append(
@@ -248,6 +259,7 @@ def save_video_route(
                             district.graph,
                             route.route,
                             route_color,
+                            road_color,
                             tmp_dir,
                             beg,
                             nb_per_threads,

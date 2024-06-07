@@ -2,14 +2,14 @@
 # snowplow/clear.py
 #
 
-from lib.districts import load_district
+from lib.districts import load_district, District
 from lib.route import Route, RouteType
-from lib.snow import load_snow
+from lib.snow import load_snow, Snow
 from rich.console import Console
 
-import osmnx as ox
 import networkx as nx
 import snowplow.lib as lib
+import lib.log as log
 
 console = Console()
 
@@ -25,21 +25,65 @@ def transferAttributes(G, G2):
             G[v][u][k].update(data)
 
 
-def clear_path(id: int) -> Route | None:
+def clear_path(id: int) -> list[Route] | None:
     """
     Return the route that a snowplow should take to
     remove the snow with id @id.
     Does not eulerize the graph but use shortest_path
     to build the circuit.
+    @param id: the id of the snow to clear
+    @return: the route that a snowplow should take to remove the snow with id @id
     """
 
     snow = load_snow(id)
     if not snow:
         return None
 
-    dist_snow = load_district(snow.related_district)
+    remain_edges = [(u, v, k) for u, v, k, _ in snow.data]
 
-    ox.plot_graph(dist_snow.graph)
+    if not remain_edges:
+        return []
+
+    district = load_district(snow.related_district)
+    montreal = load_district("Montreal")
+    current_edge = remain_edges[0]
+    res_path = []
+
+    while len(remain_edges) > 1:
+        min_length = float("inf")
+        closest_edge = None
+        min_path = []
+        for edge in remain_edges:
+            if edge == current_edge:
+                continue
+            path = nx.shortest_path(montreal.graph, current_edge[1], edge[0], weight="length")
+            length = sum(montreal.graph[path[i]][path[i + 1]][0]["length"] for i in range(len(path) - 1))
+            if length < min_length:
+                min_length = length
+                closest_edge = edge
+                min_path = path
+
+        min_path = [(min_path[i], min_path[i+1], 0) for i in range(len(min_path) - 1)]
+        remain_edges.remove(current_edge)
+        res_path.append(current_edge)
+        res_path.extend(min_path)
+        current_edge = closest_edge
+
+    if current_edge:
+        res_path.append(current_edge)
+
+    route = Route(res_path, snow.related_district, RouteType.SNOWPLOW)
+
+    previous = None
+    for u, v, k in route.route:
+        if not district.graph.has_edge(u, v, key=k) and not district.graph.has_edge(v, u, key=k):
+            log.warn(f"Edge {u} -> {v} with key {k} not in district graph.")
+        elif previous and previous[1] != u:
+            log.warn(f"Previous edge {previous} does not connect to {u}.")
+
+        previous = (u, v, k)
+
+    return [route]
 
 
 def clear_eul(id: int) -> list[Route] | None:
