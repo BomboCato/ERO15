@@ -2,12 +2,13 @@
 # drone/analyze.py
 #
 
+import math
 from multiprocessing.pool import AsyncResult, Pool
 from typing import Tuple
-from lib.districts import District, load_district
-from lib.route import Route, RouteType
-from lib.snow import Snow
-from drone.snow import gen_random_snow
+
+import networkx as nx
+from geopy.distance import geodesic
+from rich.console import Console
 from rich.progress import (
     Progress,
     SpinnerColumn,
@@ -15,13 +16,13 @@ from rich.progress import (
     TextColumn,
     TimeElapsedColumn,
 )
-from rich.console import Console
-from geopy.distance import geodesic
 
-import networkx as nx
 import drone.lib as lib
 import lib.log as log
-import math
+from drone.snow import gen_random_snow
+from lib.districts import District, load_district
+from lib.route import Route, RouteType
+from lib.snow import Snow
 
 console = Console()
 
@@ -31,7 +32,7 @@ def eucl_dist(x1: float, y1: float, x2: float, y2: float) -> float:
 
 
 def getDistrictGraphSnow(
-    i, G_all: nx.MultiGraph, l: list[nx.MultiGraph]
+        i, G_all: nx.MultiGraph, l: list[nx.MultiGraph]
 ) -> nx.MultiGraph:
     """
     Allows retrieval of each district's graph while keeping the attribute 'snow' generated in the graph of the entire city
@@ -43,7 +44,7 @@ def getDistrictGraphSnow(
 
 
 def alldistrictsSnow(
-    G_all: nx.MultiGraph, l: list[nx.MultiGraph]
+        G_all: nx.MultiGraph, l: list[nx.MultiGraph]
 ) -> list[nx.MultiGraph]:
     res = []
     for i in range(19):
@@ -86,8 +87,8 @@ def retrieveDistrictsGraph() -> list[District]:
 
 # PARCOURS DRONE SUR G (AJOUTER UN ATTRIBUT POUR DIRE SI IL FAUT DENEIGER)
 def drone(
-    G,
-    src=None,
+        G,
+        src=None,
 ) -> tuple:
     """
     Returns a tuple (G, circuit) where G is the graph with attribute 'need_clear' added and circuit is path taken by the drone
@@ -111,12 +112,12 @@ def drone(
 
 
 def analyze_snow_montreal(
-    progress: Progress,
+        progress: Progress,
+        min_snow: float, max_snow: float
 ) -> Tuple[District, Route, Snow, float]:
-
     l = retrieveDistrictsGraph()
     G_all = nx.compose_all([d.graph for d in l])
-    G_all = gen_random_snow(District("G_all", G_all))
+    G_all = gen_random_snow(District("G_all", G_all), min_snow, max_snow)
 
     l = alldistrictsSnow(G_all.graph, [d.graph for d in l])
 
@@ -236,23 +237,23 @@ def analyze_snow_montreal(
     )
 
 
-def analyze_snow(dist_name: str) -> Tuple[District, Route, Snow, float]:
+def analyze_snow(dist_name: str, min_snow: float, max_snow: float) -> Tuple[District, Route, Snow, float]:
     """
     Analyze a district and return a circuit.
     """
 
     with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        TimeElapsedColumn(),
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            TimeElapsedColumn(),
     ) as progress:
         if dist_name == "Montreal":
-            return analyze_snow_montreal(progress)
+            return analyze_snow_montreal(progress, min_snow, max_snow)
 
         district = load_district(dist_name)
 
         log.info("Generating random snow")
-        snow_dist = gen_random_snow(district)
+        snow_dist = gen_random_snow(district, min_snow, max_snow)
         snow_dist_un = snow_dist.graph.to_undirected()
 
         task_id = progress.add_task(
@@ -293,7 +294,7 @@ def analyze_snow(dist_name: str) -> Tuple[District, Route, Snow, float]:
         snow_list = [
             (u, v, k, data["snow"])
             for u, v, k, data in snow_dist_un.edges(data=True, keys=True)
-            if "snow" in data
+            if "snow" in data and 2.5 <= data["snow"] <= 15
         ]
 
         return (

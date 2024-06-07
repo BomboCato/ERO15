@@ -61,12 +61,18 @@ def drone(
         district_name: Annotated[
             str, typer.Argument(help="The district/city to analyze.")
         ],
+        min_snow: Annotated[
+            float, typer.Option(help="The minimum snow level to consider.")
+        ] = 0,
+        max_snow: Annotated[
+            float, typer.Option(help="The maximum snow level to consider.")
+        ] = 15,
 ) -> None:
     """
     Launch the drone and analyze the district/city.
     """
 
-    dist_snow, route_data, snow_data, distance = analyze_snow(district_name)
+    dist_snow, route_data, snow_data, distance = analyze_snow(district_name, min_snow, max_snow)
     table = Table(title="Results")
 
     table.add_column("District")
@@ -146,7 +152,7 @@ def snow(
         log.error(
             f"Snow id {snow_id} does not exists. You must specify an known snow id."
         )
-        raise typer.Exit()
+        raise typer.Exit(code=1)
 
     if output:
         log.info(
@@ -190,7 +196,7 @@ def route(
         log.error(
             f"Route id {route_id} does not exists. You must specify an known route id."
         )
-        raise typer.Exit()
+        raise typer.Exit(code=1)
 
     if image:
         log.info(
@@ -228,7 +234,7 @@ def snowplow(
     for route_data in routes:
         new_route = create_route(route_data.route, route_data.related_district, RouteType.SNOWPLOW)
 
-        log.info(f"Snowplow route {new_route.id} created for {new_route.related_district}")
+        log.info(f"Generated route data for '{route_data.related_district}' with id {new_route.id}")
 
 
 if __name__ == "__main__":

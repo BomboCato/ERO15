@@ -70,7 +70,7 @@ def _main_snow(
     snow_tuples = [tup[:3] for tup in snow.data]
 
     edge_colors = [
-        snow_color if (u, v, k) in snow_tuples else road_color
+        snow_color if (u, v, k) in snow_tuples or (v, u, k) in snow_tuples else road_color
         for u, v, k in district.graph.edges(keys=True)
     ]
 

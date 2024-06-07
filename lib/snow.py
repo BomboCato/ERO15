@@ -37,10 +37,10 @@ def create_snow(snow_data: list, related_district: str) -> Snow:
     return snow
 
 
-def load_snow(id: int) -> Snow | None:
+def load_snow(snow_id: int) -> Snow | None:
     """
     Return a drone analyze from the local storage or None if not found.
     """
     snow_data = lib.get_data("snow.pkl")
 
-    return snow_data.get(id, None)
+    return snow_data.get(snow_id, None)
