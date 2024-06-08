@@ -85,7 +85,6 @@ def retrieveDistrictsGraph() -> list[District]:
     return res
 
 
-# PARCOURS DRONE SUR G (AJOUTER UN ATTRIBUT POUR DIRE SI IL FAUT DENEIGER)
 def drone(
     G,
     src=None,
@@ -155,7 +154,6 @@ def analyze_snow_montreal(
         )
 
     for i in range(19):
-        # if i in [1, 5, 10, 12, 16]:
         G_eul = list_eul[i]
         for u, v, k in list_circuit[i]:
             if (u, v, k) in G_eul.edges(keys=True):
@@ -177,7 +175,6 @@ def analyze_snow_montreal(
         node, _, k = list_circuit[i][0]
         list_of_nodes.append(node)
 
-    # TODO: Hardcoder les quartiers ou remplacer nx.shortest path par une fonction qui calcule la distance en fonction de weight et pas en fonction du NB de noeuds
     while len(list_of_nodes) > 1:
         min_distance = float("inf")
         current_node = list_of_nodes[0]
