@@ -67,7 +67,7 @@ snowpath --help       # --help is optional since it will display the same help p
 
 | Options | Type | Description | Default Value | Required |
 | --- | --- | --- | --- | --- |
-| `--output` | TEXT | File name to save the district image. The image will be saved in the `images/` folder. | `image.png` | No |
+| `--output` | TEXT | File name to save the district image. | `None` | No |
 
 | Arguments | Type | Description | Default Value | Required |
 | --- | --- | --- | --- | --- |
@@ -154,13 +154,13 @@ snowpath snowplow [OPTIONS] SNOW_ID
 
 ## Examples
 
-Display Verdun in Montreal in a matplotlib window.
+Displays Verdun in Montreal in a matplotlib window.
 
 ```sh
 snowpath display district "Verdun, Montreal"
 ```
 
-![Verdun district map](https://github.com/BomboCato/ERO15/tree/main/resources/image.png)
+![Verdun district map](./resources/image.png)
 
 We can now run the drone analysis on Verdun. It will generate snow and route data with both ids at `0`.
 
@@ -182,7 +182,7 @@ Now let's make a video of the route the drone took using the following command:\
 snowpath display route 0 --video verdun.mp4
 ```
 
-![Video of the drone route in Verdun](https://github.com/BomboCato/ERO15/tree/main/resources/verdun.mp4)
+![Video of the drone route in Verdun](./resources/verdun.mp4)
 
 We can also generate an image of the path using:
 
@@ -190,7 +190,7 @@ We can also generate an image of the path using:
 snowpath display route 0 --image route.png
 ```
 
-![Drone route analyzing snow in Verdun](https://github.com/BomboCato/ERO15/tree/main/resources/route.png)
+![Drone route analyzing snow in Verdun](./resources/route.png)
 
 We can now use the snowplows to remove all the snow analyzed by the drone. It will generate a new route data with id `1` corresponding to the snowplow path:
 
