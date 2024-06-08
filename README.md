@@ -154,7 +154,7 @@ snowpath snowplow [OPTIONS] SNOW_ID
 
 ## Examples
 
-Display Verdun in Montreal and saves the result image in `./images/image.png`:
+Display Verdun in Montreal in a matplotlib window.
 
 ```sh
 snowpath display district "Verdun, Montreal"
