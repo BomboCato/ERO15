@@ -10,13 +10,19 @@ class RouteType(Enum):
     """
     Enum for the type of route.
     """
+
     DRONE = 0
     SNOWPLOW = 1
 
 
-
 class Route:
-    def __init__(self, route: list, related_district: str, route_type: RouteType, route_id: int = -1) -> None:
+    def __init__(
+        self,
+        route: list,
+        related_district: str,
+        route_type: RouteType,
+        route_id: int = -1,
+    ) -> None:
         self.id = route_id
         self.route = route
         self.related_district = related_district
@@ -29,7 +35,9 @@ class Route:
         return self.__str__()
 
 
-def create_route(route_data: list, related_district: str, route_type: RouteType) -> Route:
+def create_route(
+    route_data: list, related_district: str, route_type: RouteType
+) -> Route:
     """
     Create a new route object and save it to local storage.
     """

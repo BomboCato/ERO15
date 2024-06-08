@@ -1,12 +1,22 @@
 #
 # snowplow/clear.py
 #
+from networkx import MultiDiGraph, NetworkXNoPath
 
 from lib.districts import load_district, District
 from lib.route import Route, RouteType
 from lib.snow import load_snow, Snow
 from rich.console import Console
+from rich.progress import (
+    Progress,
+    BarColumn,
+    SpinnerColumn,
+    TaskID,
+    TextColumn,
+    TimeElapsedColumn,
+)
 
+import typer
 import networkx as nx
 import snowplow.lib as lib
 import lib.log as log
@@ -25,7 +35,7 @@ def transferAttributes(G, G2):
             G[v][u][k].update(data)
 
 
-def clear_path(id: int) -> list[Route] | None:
+def clear_path(id: int) -> Route | None:
     """
     Return the route that a snowplow should take to
     remove the snow with id @id.
@@ -42,69 +52,112 @@ def clear_path(id: int) -> list[Route] | None:
     remain_edges = [(u, v, k) for u, v, k, _ in snow.data]
 
     if not remain_edges:
-        return []
+        return None
 
     district = load_district(snow.related_district)
     montreal = load_district("Montreal")
+    montreal.graph = montreal.graph.to_undirected()
     current_edge = remain_edges[0]
     res_path = []
 
-    while len(remain_edges) > 1:
-        min_length = float("inf")
-        closest_edge = None
-        min_path = []
-        for edge in remain_edges:
-            if edge == current_edge:
-                continue
-            path = nx.shortest_path(montreal.graph, current_edge[1], edge[0], weight="length")
-            length = sum(montreal.graph[path[i]][path[i + 1]][0]["length"] for i in range(len(path) - 1))
-            if length < min_length:
-                min_length = length
-                closest_edge = edge
-                min_path = path
+    try:
 
-        min_path = [(min_path[i], min_path[i+1], 0) for i in range(len(min_path) - 1)]
-        remain_edges.remove(current_edge)
-        res_path.append(current_edge)
-        res_path.extend(min_path)
-        current_edge = closest_edge
+        with Progress() as progress:
+            task = progress.add_task(
+                "Building snowplow route", total=len(remain_edges)
+            )
 
-    if current_edge:
-        res_path.append(current_edge)
+            while len(remain_edges) > 1:
+                min_length = float("inf")
+                closest_edge = None
+                min_path = []
+                for edge in remain_edges:
+                    if edge == current_edge:
+                        continue
+                    path = nx.shortest_path(
+                        montreal.graph,
+                        current_edge[1],
+                        edge[0],
+                        weight="length",
+                    )
+                    length = sum(
+                        montreal.graph[path[i]][path[i + 1]][0]["length"]
+                        for i in range(len(path) - 1)
+                    )
+                    if length < min_length:
+                        min_length = length
+                        closest_edge = edge
+                        min_path = path
 
-    route = Route(res_path, snow.related_district, RouteType.SNOWPLOW)
+                min_path = [
+                    (min_path[i], min_path[i + 1], 0)
+                    for i in range(len(min_path) - 1)
+                ]
+                remain_edges.remove(current_edge)
+                res_path.append(current_edge)
+                res_path.extend(min_path)
+                current_edge = closest_edge
 
-    previous = None
-    for u, v, k in route.route:
-        if not district.graph.has_edge(u, v, key=k) and not district.graph.has_edge(v, u, key=k):
-            log.warn(f"Edge {u} -> {v} with key {k} not in district graph.")
-        elif previous and previous[1] != u:
-            log.warn(f"Previous edge {previous} does not connect to {u}.")
+                progress.update(task, advance=1)
 
-        previous = (u, v, k)
+        if current_edge:
+            res_path.append(current_edge)
 
-    return [route]
+        route = Route(res_path, snow.related_district, RouteType.SNOWPLOW)
+
+        previous = None
+        for u, v, k in route.route:
+            if not district.graph.has_edge(
+                u, v, key=k
+            ) and not district.graph.has_edge(v, u, key=k):
+                log.warn(
+                    f"Edge {u} -> {v} with key {k} not in district graph."
+                )
+            elif previous and previous[1] != u:
+                log.warn(
+                    f"Previous edge {previous} does not connect to {u}."
+                )
+
+            previous = (u, v, k)
+
+        return route
+
+    except NetworkXNoPath:
+        log.error(
+            "No path found between two nodes. You should use --method eul."
+        )
+        raise typer.Exit(code=1)
 
 
-def clear_eul(id: int) -> list[Route] | None:
+def clear_eul(id: int) -> Route | None:
     """ """
     snow = load_snow(id)
     if not snow:
         return None
 
     dist_all = load_district("Montreal")
-    G_all = dist_all.graph
+    G_all = dist_all.graph.to_undirected()
     G_di = load_district(snow.related_district).graph
 
     list_snow = [
-        (u, v, k)
-        for u, v, k, data in snow.data
-        if 2.5 <= data <= 15
+        (u, v, k) for u, v, k, data in snow.data if 2.5 <= data <= 15
     ]
-    snow_graph = nx.edge_subgraph(G_di, list_snow)
+    snow_graph: MultiDiGraph = nx.edge_subgraph(G_di, list_snow)
 
-    G_conn = lib.strong_connect(snow_graph, "virtual")
-    G_eul = lib.diEulerize(G_conn, "virtual")
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        TimeElapsedColumn(),
+    ) as progress:
+        task = progress.add_task("Strong connect graph...")
+        G_conn = lib.strong_connect(snow_graph, "virtual")
+        progress.remove_task(task)
+        log.info(f"Strong connect: added {G_conn.number_of_edges() - snow_graph.number_of_edges()} edge(s)")
+
+        task = progress.add_task("diEulerize graph...")
+        G_eul = lib.diEulerize(G_conn, "virtual")
+        progress.remove_task(task)
+        log.info(f"diEulerize: added {G_eul.number_of_edges() - G_conn.number_of_edges()} edge(s)")
 
     circuit = list(nx.eulerian_circuit(G_eul, keys=True))
     real_circuit = []
@@ -118,7 +171,7 @@ def clear_eul(id: int) -> list[Route] | None:
                 k = float("inf")
                 edges = G_all[path[i]][path[i + 1]]
                 for value, edge in edges.items():
-                    if edge["length"] < min_len:
+                    if "length" in edge and edge["length"] < min_len:
                         min_len = edge["length"]
                         k = value
                 edge_path.append((path[i], path[i + 1], k))
@@ -128,4 +181,4 @@ def clear_eul(id: int) -> list[Route] | None:
 
     route = Route(real_circuit, snow.related_district, RouteType.SNOWPLOW)
 
-    return [route]
+    return route

@@ -7,7 +7,10 @@ import lib.lib as lib
 
 class Snow:
     def __init__(
-        self, snow_data: list[tuple[int, int, int, float]], related_district: str, id: int = -1
+        self,
+        snow_data: list[tuple[int, int, int, float]],
+        related_district: str,
+        id: int = -1,
     ) -> None:
         self.id = id
         self.data = snow_data
