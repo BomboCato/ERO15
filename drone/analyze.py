@@ -32,7 +32,7 @@ def eucl_dist(x1: float, y1: float, x2: float, y2: float) -> float:
 
 
 def getDistrictGraphSnow(
-        i, G_all: nx.MultiGraph, l: list[nx.MultiGraph]
+    i, G_all: nx.MultiGraph, l: list[nx.MultiGraph]
 ) -> nx.MultiGraph:
     """
     Allows retrieval of each district's graph while keeping the attribute 'snow' generated in the graph of the entire city
@@ -44,7 +44,7 @@ def getDistrictGraphSnow(
 
 
 def alldistrictsSnow(
-        G_all: nx.MultiGraph, l: list[nx.MultiGraph]
+    G_all: nx.MultiGraph, l: list[nx.MultiGraph]
 ) -> list[nx.MultiGraph]:
     res = []
     for i in range(19):
@@ -87,8 +87,8 @@ def retrieveDistrictsGraph() -> list[District]:
 
 # PARCOURS DRONE SUR G (AJOUTER UN ATTRIBUT POUR DIRE SI IL FAUT DENEIGER)
 def drone(
-        G,
-        src=None,
+    G,
+    src=None,
 ) -> tuple:
     """
     Returns a tuple (G, circuit) where G is the graph with attribute 'need_clear' added and circuit is path taken by the drone
@@ -112,8 +112,7 @@ def drone(
 
 
 def analyze_snow_montreal(
-        progress: Progress,
-        min_snow: float, max_snow: float
+    progress: Progress, min_snow: float, max_snow: float
 ) -> Tuple[District, Route, Snow, float]:
     l = retrieveDistrictsGraph()
     G_all = nx.compose_all([d.graph for d in l])
@@ -237,15 +236,17 @@ def analyze_snow_montreal(
     )
 
 
-def analyze_snow(dist_name: str, min_snow: float, max_snow: float) -> Tuple[District, Route, Snow, float]:
+def analyze_snow(
+    dist_name: str, min_snow: float, max_snow: float
+) -> Tuple[District, Route, Snow, float]:
     """
     Analyze a district and return a circuit.
     """
 
     with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            TimeElapsedColumn(),
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        TimeElapsedColumn(),
     ) as progress:
         if dist_name == "Montreal":
             return analyze_snow_montreal(progress, min_snow, max_snow)
