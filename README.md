@@ -160,7 +160,7 @@ Displays Verdun in Montreal in a matplotlib window.
 snowpath display district "Verdun, Montreal"
 ```
 
-![Verdun district map](./resources/image.png)
+<img alt="Verdun district map" src="./resources/image.png" width=256 height=392 />
 
 We can now run the drone analysis on Verdun. It will generate snow and route data with both ids at `0`.
 
@@ -182,15 +182,15 @@ Now let's make a video of the route the drone took using the following command:\
 snowpath display route 0 --video verdun.mp4
 ```
 
-![Video of the drone route in Verdun](./resources/verdun.mp4)
+<video src='./resources/verdun.gif'></video>
 
-We can also generate an image of the path using:
+We can also generate an image of the drone path using:
 
 ```sh
 snowpath display route 0 --image route.png
 ```
 
-![Drone route analyzing snow in Verdun](./resources/route.png)
+<img alt="Drone route analyzing snow in Verdun" src="./resources/route.png" width=256 height=392 />
 
 We can now use the snowplows to remove all the snow analyzed by the drone. It will generate a new route data with id `1` corresponding to the snowplow path:
 
