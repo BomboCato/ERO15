@@ -182,7 +182,7 @@ Now let's make a video of the route the drone took using the following command:\
 snowpath display route 0 --video verdun.mp4
 ```
 
-<video src='./resources/verdun.gif'></video>
+![Video of the drone path in Verdun](./resources/verdun.gif)
 
 We can also generate an image of the drone path using:
 
