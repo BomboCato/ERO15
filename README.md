@@ -202,14 +202,15 @@ This command will output the following table for the type-1 snowplow:
 
 | Distance | Speed | Time | Distance related Cost | Time related Cost | Total Cost |
 | --- | --- | --- | --- | --- | --- |
-| | | | | | |
+| 520041.78m | 10km/h | 52.0h | 572.05€ | 1566.00€ | 2138.05€ |
 
 And this table for the type-2 snowplow:
 
 | Distance | Speed | Time | Distance related Cost | Time related Cost | Total Cost |
 | --- | --- | --- | --- | --- | --- |
-| | | | | | |
+| 520041.78m | 20km/h | 26.0h | 676.05€ | 1037.40€ | 1713.45€ |
 
+Of course these results depend on the random snow generation at the beginning of the process.\
 We can once again generate a video or an image to visualize the path of the snowplow.\
 You can play with the options as much as you want, there are a lot of possibilities.
 
