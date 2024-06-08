@@ -178,10 +178,6 @@ def _update_edge_colors(
             edge_colors[edges.index((u, v, k))] = route_color
         elif (v, u, k) in edges:
             edge_colors[edges.index((v, u, k))] = route_color
-        else:
-            log.warn(
-                f"Edge {u} -> {v} or {v} -> {v} with key {k} will not be colored"
-            )
     except:
         pass
 
