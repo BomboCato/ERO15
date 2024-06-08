@@ -266,7 +266,7 @@ def time_cost(time, level=1):
     under_8 = 1.1
     after_8 = 1.3  # Those are great chocolates
     if (level == 2):
-        dail_cost = 800
+        daily_cost = 800
         under_8 = 1.3
         after_8 = 1.5
     time_cost = 0
@@ -295,7 +295,7 @@ def snowplow(
     Start the snowplows.
     """
 
-    routes = None
+    route = None
 
     if method == "eul":
         route = clear_eul(snow_id)
@@ -307,10 +307,9 @@ def snowplow(
     
     distance = 0
     district_all = load_district("Montreal")
-    G_all = district_all.graph
-    for r in routes:
-        for (u, v, k) in r.route:
-            distance += G_all[u][v][k]["length"]
+    G_all = district_all.graph.to_undirected()
+    for (u, v, k) in route.route:
+        distance += G_all[u][v][k]["length"]
 
     table = Table(title="Results Snowplow LVL.1")
 
@@ -323,7 +322,7 @@ def snowplow(
 
     time_1 = round(distance / 1000 / 10, 2)
     dist_cost = round(1.1 * (distance / 1000), 2)
-    t_cost = time_cost(time_1)
+    t_cost = round(time_cost(time_1), 2)
 
     table.add_row(
         f"{round(distance, 2)}m",
@@ -331,7 +330,7 @@ def snowplow(
         f"{round(distance / 1000 / 10, 2)}h",
         f"{dist_cost}€",
         f"{t_cost}€",
-        f"{dist_cost + t_cost}€",
+        f"{round(dist_cost + t_cost, 2)}€",
     )
 
     console.print(table)
@@ -347,7 +346,7 @@ def snowplow(
 
     time_2 = round(distance / 1000 / 20, 2)
     dist_cost = round(1.3 * (distance / 1000), 2)
-    t_cost = time_cost(time_2, 2)
+    t_cost = round(time_cost(time_2, 2), 2)
 
     table_2.add_row(
         f"{round(distance, 2)}m",
@@ -355,7 +354,7 @@ def snowplow(
         f"{time_2}h",
         f"{dist_cost}€",
         f"{t_cost}€",
-        f"{dist_cost + t_cost}€",
+        f"{round(dist_cost + t_cost, 2)}€",
     )
 
     console.print(table_2)
