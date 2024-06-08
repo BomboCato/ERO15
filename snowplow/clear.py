@@ -28,7 +28,7 @@ def transferAttributes(G, G2):
             G[v][u][k].update(data)
 
 
-def clear_path(id: int) -> list[Route] | None:
+def clear_path(id: int) -> Route | None:
     """
     Return the route that a snowplow should take to
     remove the snow with id @id.
@@ -45,7 +45,7 @@ def clear_path(id: int) -> list[Route] | None:
     remain_edges = [(u, v, k) for u, v, k, _ in snow.data]
 
     if not remain_edges:
-        return []
+        return None
 
     district = load_district(snow.related_district)
     montreal = load_district("Montreal")
@@ -107,14 +107,14 @@ def clear_path(id: int) -> list[Route] | None:
 
             previous = (u, v, k)
 
-        return [route]
+        return route
 
     except NetworkXNoPath:
         log.error("No path found between two nodes. You should use --method eul.")
         raise typer.Exit(code=1)
 
 
-def clear_eul(id: int) -> list[Route] | None:
+def clear_eul(id: int) -> Route | None:
     """ """
     snow = load_snow(id)
     if not snow:
@@ -154,4 +154,4 @@ def clear_eul(id: int) -> list[Route] | None:
 
     route = Route(real_circuit, snow.related_district, RouteType.SNOWPLOW)
 
-    return [route]
+    return route

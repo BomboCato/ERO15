@@ -70,6 +70,9 @@ def drone(
     max_snow: Annotated[
         float, typer.Option(help="The maximum snow level to consider.")
     ] = 15,
+    drone_speed: Annotated[
+        int, typer.Option(help="The max speed the drone have, in km/h")
+    ] = 60
 ) -> None:
     """
     Launch the drone and analyze the district/city.
@@ -89,8 +92,8 @@ def drone(
     table.add_row(
         district_name,
         f"{round(distance, 2)}m",
-        "60km/h",
-        f"{round(distance / 1000 / 60, 2)}h",
+        f"{drone_speed}km/h",
+        f"{round(distance / 1000 / drone_speed, 2)}h",
         f"{100 + round(0.01 * (distance / 1000), 2)}€",
     )
 
@@ -275,29 +278,28 @@ def snowplow(
     routes = None
 
     if method == "eul":
-        routes = clear_eul(snow_id)
+        route = clear_eul(snow_id)
     elif method == "path":
-        routes = clear_path(snow_id)
+        route = clear_path(snow_id)
     else:
         log.error(f"Unknown method '{method}'.")
         raise typer.Exit(code=1)
 
-    if not routes:
+    if not route:
         log.error(
             f"Snow id {snow_id} does not exists. You must specify an known snow id."
         )
         raise typer.Exit(code=1)
 
-    for route_data in routes:
-        new_route = create_route(
-            route_data.route,
-            route_data.related_district,
-            RouteType.SNOWPLOW,
-        )
+    new_route = create_route(
+        route.route,
+        route.related_district,
+        RouteType.SNOWPLOW,
+    )
 
-        log.info(
-            f"Generated route data for '{route_data.related_district}' with id {new_route.id}"
-        )
+    log.info(
+        f"Generated route data for '{route.related_district}' with id {new_route.id}"
+    )
 
 
 if __name__ == "__main__":
