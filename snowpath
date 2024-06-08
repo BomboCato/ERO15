@@ -20,6 +20,7 @@ from lib.districts import load_district
 from lib.route import load_route, create_route, RouteType
 from lib.snow import create_snow, load_snow
 from snowplow.clear import clear_eul, clear_path
+from math import ceil
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 display_app = typer.Typer(no_args_is_help=True, add_completion=False)
@@ -218,6 +219,25 @@ def route(
         display_image_route(district_data, route_data, route_color, road_color)
 
 
+def time_cost(time, level=1):
+    """
+    Function that computes the time related cost according to the level of snowplow used
+    Time must be given in hours and level is either one or two
+    """
+    daily_cost = 500
+    under_8 = 1.1
+    after_8 = 1.3  # Those are great chocolates
+    if (level == 2):
+        dail_cost = 800
+        under_8 = 1.3
+        after_8 = 1.5
+    time_cost = 0
+    if (time <= 8):
+        time_cost = round(time * under_8, 2)
+    else:
+        time_cost = 8 * under_8 + round((time - 8) * after_8, 2)
+    return time_cost + ceil(time / 24) * daily_cost
+
 @app.command(help="Snowplow related computing.", no_args_is_help=True)
 def snowplow(
         snow_id: Annotated[
@@ -246,6 +266,61 @@ def snowplow(
     else:
         log.error(f"Unknown method '{method}'.")
         raise typer.Exit(code=1)
+    
+    distance = 0
+    district_all = load_district("Montreal")
+    G_all = district_all.graph
+    for r in routes:
+        for (u, v, k) in r.route:
+            distance += G_all[u][v][k]["length"]
+
+    table = Table(title="Results Snowplow LVL.1")
+
+    table.add_column("Distance")
+    table.add_column("Speed")
+    table.add_column("Time")
+    table.add_column("Distance related Cost")
+    table.add_column("Time related Cost")
+    table.add_column("Total Cost")
+
+    time_1 = round(distance / 1000 / 10, 2)
+    dist_cost = round(1.1 * (distance / 1000), 2)
+    t_cost = time_cost(time_1)
+
+    table.add_row(
+        f"{round(distance, 2)}m",
+        "10km/h",
+        f"{round(distance / 1000 / 10, 2)}h",
+        f"{dist_cost}€",
+        f"{t_cost}€",
+        f"{dist_cost + t_cost}€",
+    )
+
+    console.print(table)
+
+    table_2 = Table(title="Results Snowplow LVL.2 ")
+
+    table_2.add_column("Distance")
+    table_2.add_column("Speed")
+    table_2.add_column("Time")
+    table_2.add_column("Distance related Cost")
+    table_2.add_column("Time related Cost")
+    table_2.add_column("Total Cost")
+
+    time_2 = round(distance / 1000 / 20, 2)
+    dist_cost = round(1.3 * (distance / 1000), 2)
+    t_cost = time_cost(time_2, 2)
+
+    table_2.add_row(
+        f"{round(distance, 2)}m",
+        "20km/h",
+        f"{time_2}h",
+        f"{dist_cost}€",
+        f"{t_cost}€",
+        f"{dist_cost + t_cost}€",
+    )
+
+    console.print(table_2)
 
     if not routes:
         log.error(
