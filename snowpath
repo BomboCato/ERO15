@@ -131,7 +131,7 @@ def district(
     """
     dist = load_district(name)
 
-    if output:
+    if not output:
         log.info(f"Displaying district '{name}'")
 
         ox.plot_graph(dist.graph)

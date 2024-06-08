@@ -1,13 +1,20 @@
 #
 # snowplow/clear.py
 #
-from networkx import NetworkXNoPath
+from networkx import MultiDiGraph, NetworkXNoPath
 
 from lib.districts import load_district, District
 from lib.route import Route, RouteType
 from lib.snow import load_snow, Snow
 from rich.console import Console
-from rich.progress import Progress, BarColumn, TaskID, TextColumn, TimeElapsedColumn
+from rich.progress import (
+    Progress,
+    BarColumn,
+    SpinnerColumn,
+    TaskID,
+    TextColumn,
+    TimeElapsedColumn,
+)
 
 import typer
 import networkx as nx
@@ -56,7 +63,9 @@ def clear_path(id: int) -> Route | None:
     try:
 
         with Progress() as progress:
-            task = progress.add_task("Building snowplow route", total=len(remain_edges))
+            task = progress.add_task(
+                "Building snowplow route", total=len(remain_edges)
+            )
 
             while len(remain_edges) > 1:
                 min_length = float("inf")
@@ -66,7 +75,10 @@ def clear_path(id: int) -> Route | None:
                     if edge == current_edge:
                         continue
                     path = nx.shortest_path(
-                        montreal.graph, current_edge[1], edge[0], weight="length"
+                        montreal.graph,
+                        current_edge[1],
+                        edge[0],
+                        weight="length",
                     )
                     length = sum(
                         montreal.graph[path[i]][path[i + 1]][0]["length"]
@@ -88,7 +100,6 @@ def clear_path(id: int) -> Route | None:
 
                 progress.update(task, advance=1)
 
-
         if current_edge:
             res_path.append(current_edge)
 
@@ -103,14 +114,18 @@ def clear_path(id: int) -> Route | None:
                     f"Edge {u} -> {v} with key {k} not in district graph."
                 )
             elif previous and previous[1] != u:
-                log.warn(f"Previous edge {previous} does not connect to {u}.")
+                log.warn(
+                    f"Previous edge {previous} does not connect to {u}."
+                )
 
             previous = (u, v, k)
 
         return route
 
     except NetworkXNoPath:
-        log.error("No path found between two nodes. You should use --method eul.")
+        log.error(
+            "No path found between two nodes. You should use --method eul."
+        )
         raise typer.Exit(code=1)
 
 
@@ -127,10 +142,22 @@ def clear_eul(id: int) -> Route | None:
     list_snow = [
         (u, v, k) for u, v, k, data in snow.data if 2.5 <= data <= 15
     ]
-    snow_graph = nx.edge_subgraph(G_di, list_snow)
+    snow_graph: MultiDiGraph = nx.edge_subgraph(G_di, list_snow)
 
-    G_conn = lib.strong_connect(snow_graph, "virtual")
-    G_eul = lib.diEulerize(G_conn, "virtual")
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        TimeElapsedColumn(),
+    ) as progress:
+        task = progress.add_task("Strong connect graph...")
+        G_conn = lib.strong_connect(snow_graph, "virtual")
+        progress.remove_task(task)
+        log.info(f"Strong connect: added {G_conn.number_of_edges() - snow_graph.number_of_edges()} edge(s)")
+
+        task = progress.add_task("diEulerize graph...")
+        G_eul = lib.diEulerize(G_conn, "virtual")
+        progress.remove_task(task)
+        log.info(f"diEulerize: added {G_eul.number_of_edges() - G_conn.number_of_edges()} edge(s)")
 
     circuit = list(nx.eulerian_circuit(G_eul, keys=True))
     real_circuit = []
