@@ -2,38 +2,21 @@
 
 ## Project structure
 
-.\
-├── drone\
-│   ├── \_\_init\_\_.py\
-│   ├── analyze.py\
-│   ├── lib.py\
-│   └── snow.py\
-├── lib\
-│   ├── \_\_init\_\_.py\
-│   ├── display.py\
-│   ├── districts.py\
-│   ├── lib.py\
-│   ├── log.py\
-│   ├── route.py\
-│   └── snow.py\
-├── snowplow\
-│   ├── \_\_init\_\_.py\
-│   ├── clear.py\
-│   └── lib.py\
-├── .gitignore\
-├── AUTHORS\
-├── README.md\
-├── requirements.txt\
-└── snowpath
+The project is divided in two main parts. The first one is the drone, and the second one is the snowplow.\
+In the `drone` folder, we have all the drone-related computing. The same goes for the `snowplow` folder.\
+We organized every utility functions in a `lib` folder and every images and videos used for the `README.md` in the `resources` folder.\
+We also have the main program file at the root of the project for easy usage.
 
 ## How to install
 
-Make sure you have Python 3.10.X or above installed on your computer.\
+Make sure you have `Python 3.10.X` or above installed on your computer.\
 You will need to install all the necessary dependencies by executing (in the root directory):
 
 ```sh
 pip install -r requirements.txt
 ```
+
+If you want to generate videos of routes, you will have to install `ffmpeg`.
 
 ## How to run
 
@@ -84,7 +67,7 @@ snowpath --help       # --help is optional since it will display the same help p
 
 | Options | Type | Description | Default Value | Required |
 | --- | --- | --- | --- | --- |
-| `--output` | TEXT | File name to save the district image. | `None` | No |
+| `--output` | TEXT | File name to save the district image. The image will be saved in the `images/` folder. | `image.png` | No |
 
 | Arguments | Type | Description | Default Value | Required |
 | --- | --- | --- | --- | --- |
@@ -157,7 +140,7 @@ snowpath drone [OPTIONS] DISTRICT_NAME
 
 | Options | Type | Description | Default Value | Required |
 | --- | --- | --- | --- | --- |
-| `--method` | TEXT | The method to use to clear the snow. Can be either `eul` or `path`. | `eul` | No |
+| `--method` | TEXT | The method to use to clear the snow. Either `eul` or `path`. | `eul` | No |
 
 | Arguments | Type | Description | Default Value | Required |
 | --- | --- | --- | --- | --- |
@@ -168,6 +151,67 @@ snowpath drone [OPTIONS] DISTRICT_NAME
 ```sh
 snowpath snowplow [OPTIONS] SNOW_ID
 ```
+
+## Examples
+
+Display Verdun in Montreal and saves the result image in `./images/image.png`:
+
+```sh
+snowpath display district "Verdun, Montreal"
+```
+
+![Verdun district map](https://github.com/BomboCato/ERO15/tree/main/resources/image.png)
+
+We can now run the drone analysis on Verdun. It will generate snow and route data with both ids at `0`.
+
+```sh
+snowpath drone "Verdun, Montreal"
+```
+
+The above command will result in this table:
+
+| District | Distance | Speed | Time | Cost |
+| --- | --- | --- | --- | --- |
+| Verdun, Montreal | 81294.16m | 60km/h | 1.35h | 100.81€ |
+
+Now let's make a video of the route the drone took using the following command:\
+**WARNING: Make sure you have `ffmpeg` installed before trying to create a video.**\
+**If you are on Windows, this will most likely not work due to a bug related to virtual environments on some IDEs.**
+
+```sh
+snowpath display route 0 --video verdun.mp4
+```
+
+![Video of the drone route in Verdun](https://github.com/BomboCato/ERO15/tree/main/resources/verdun.mp4)
+
+We can also generate an image of the path using:
+
+```sh
+snowpath display route 0 --image route.png
+```
+
+![Drone route analyzing snow in Verdun](https://github.com/BomboCato/ERO15/tree/main/resources/route.png)
+
+We can now use the snowplows to remove all the snow analyzed by the drone. It will generate a new route data with id `1` corresponding to the snowplow path:
+
+```sh
+snowpath snowplow 0
+```
+
+This command will output the following table for the type-1 snowplow:
+
+| Distance | Speed | Time | Distance related Cost | Time related Cost | Total Cost |
+| --- | --- | --- | --- | --- | --- |
+| | | | | | |
+
+And this table for the type-2 snowplow:
+
+| Distance | Speed | Time | Distance related Cost | Time related Cost | Total Cost |
+| --- | --- | --- | --- | --- | --- |
+| | | | | | |
+
+We can once again generate a video or an image to visualize the path of the snowplow.\
+You can play with the options as much as you want, there are a lot of possibilities.
 
 ## Authors
 
